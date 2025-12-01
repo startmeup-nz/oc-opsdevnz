@@ -22,6 +22,11 @@ prod_client = OpenCollectiveClient.for_prod()
 ## CLI example (whoami)
 See `examples/whoami.py` for a minimal GraphQL query; adjust the slug to your collective/host.
 
+## Other examples
+- `examples/create_host.py` — create/update an organization (host) with currency/legal name/website/tags.
+- `examples/get_admins.py` — list admins for a slug.
+- `examples/create_and_pay_expense.py`, `examples/list_expenses.py`, `examples/get_balance.py` — expense/balance flows.
+
 ## Notes
 - Tokens come from 1Password (`OC_SECRET_REF`) via `op-opsdevnz`; `OC_TOKEN` is an optional override.
 - Prod is opt-in: use `OpenCollectiveClient.for_prod()` or set `OC_API_URL` to the prod GraphQL endpoint.
