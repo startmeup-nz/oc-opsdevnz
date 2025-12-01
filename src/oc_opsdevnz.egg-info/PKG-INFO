@@ -6,34 +6,97 @@ Author: John Billings
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: httpx>=0.27.0
 Requires-Dist: op-opsdevnz>=0.1.0
+Requires-Dist: PyYAML>=6.0
+Provides-Extra: dev
+Requires-Dist: build>=1.2.1; extra == "dev"
+Requires-Dist: pytest>=7.4; extra == "dev"
+Requires-Dist: respx>=0.20.0; extra == "dev"
+Requires-Dist: ruff>=0.6.0; extra == "dev"
 Dynamic: license-file
 
 # oc_opsdevnz
-OpenCollective client for OpsDev.NZ (staging-first). Resolves tokens from 1Password via `op-opsdevnz`, with optional `OC_TOKEN` override. Defaults to the staging API unless you explicitly select prod.
+
+Staging-first OpenCollective client and CLI for OpsDev.nz. Resolves tokens from 1Password via `op-opsdevnz` and defaults to the staging API unless you explicitly opt into prod.
+
+## Features
+- httpx GraphQL client with retries/backoff and redacted error messages.
+- Environment guardrails: staging by default, `for_prod()`/`--prod` required for production.
+- Token resolution via `OC_SECRET_REF`/`OC_TOKEN` using `op-opsdevnz`.
+- CLI helpers for whoami, host organization upserts, and collective creation/apply-to-host flows from YAML/JSON.
 
 ## Install
 ```bash
 pip install oc-opsdevnz op-opsdevnz
+# or editable while hacking in this repo
+pip install -e modules/oc_opsdevnz[dev]
 ```
 
-## Quick start (staging)
+## CLI (staging by default)
 ```bash
 export OC_SECRET_REF="op://startmeup.nz/api-staging.opencollective.com/credential"  # or set OC_TOKEN
-python -m oc_opsdevnz.examples.whoami
+
+# Fetch an account/collective by slug
+oc-opsdevnz whoami opsdevnz
+
+# Create/update host orgs from YAML
+oc-opsdevnz hosts --file hosts.yaml
+
+# Create/update collectives and optionally apply to a host
+oc-opsdevnz collectives --file collectives.yaml
 ```
-This uses the staging API by default. Override with `OC_API_URL` if needed, or:
+Use `--prod` to target production (only when you mean it), or `--api-url` to override explicitly.
+
+### Example YAML shapes
+`hosts.yaml` (real staging values):
+```yaml
+- name: StartMeUp.NZ
+  slug: startmeup-nz
+  description: Fiscal sponsor for OpsDev.NZ and NZ startups (staging)
+  website: https://startmeup.nz
+  currency: nzd
+  tags: [fiscal-host, newzealand, aotearoa]
+```
+
+`collectives.yaml` (real staging values):
+```yaml
+- name: OpsDev.NZ
+  slug: opsdev-nz
+  description: OpsDev.NZ community and projects.
+  tags: [opsdev, operations, engineering, nz]
+  host_slug: startmeup-nz
+  apply_to_host: true
+  host_apply_message: Please host OpsDev.NZ on staging.
+```
+
+## Python API
 ```python
 from oc_opsdevnz import OpenCollectiveClient
+
 client = OpenCollectiveClient.for_staging()
-# or explicitly prod (only if you mean it):
-prod_client = OpenCollectiveClient.for_prod()
+data = client.graphql("query { account(slug:\"opsdevnz\") { id slug name } }")
+
+prod_client = OpenCollectiveClient.for_prod()  # explicit opt-in
 ```
 
-## CLI example (whoami)
-See `examples/whoami.py` for a minimal GraphQL query; adjust the slug to your collective/host.
+Helpers for YAML-driven workflows:
+```python
+from oc_opsdevnz import load_items, upsert_collective, upsert_host
+from pathlib import Path
 
-## Notes
-- Tokens come from 1Password (`OC_SECRET_REF`) via `op-opsdevnz`; `OC_TOKEN` is an optional override.
-- Prod is opt-in: use `OpenCollectiveClient.for_prod()` or set `OC_API_URL` to the prod GraphQL endpoint.
-- Debugging auth: set `OC_DEBUG=1` to include a redacted response snippet and token fingerprint (SHA256 prefix) in errors. Body is omitted by default to avoid leaking tokens.
+client = OpenCollectiveClient.for_staging()
+for host in load_items(Path("hosts.yaml")):
+    upsert_host(client, host)
+```
+
+## Development
+```bash
+cd modules/oc_opsdevnz
+python -m venv .venv && source .venv/bin/activate
+pip install -e .[dev]
+pytest
+```
+
+## License
+Apache-2.0 © OpsDev.nz

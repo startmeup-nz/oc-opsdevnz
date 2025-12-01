@@ -1,7 +1,10 @@
 # examples/list_expenses.py
+import json
+import os
+import sys
+
 from op_opsdevnz.onepassword import get_secret
-from oc_opsdevnz.oc_client import OpenCollectiveClient
-import os, sys, json
+from oc_opsdevnz.oc_client import OpenCollectiveClient, PROD_URL
 
 def main():
     if len(sys.argv) < 2:
@@ -13,7 +16,8 @@ def main():
     statuses = statuses or ["PENDING", "APPROVED", "PAID"]
 
     token = get_secret(secret_ref_env="OC_SECRET_REF")
-    oc = OpenCollectiveClient(token, base_url=os.getenv("OC_API_URL"))
+    api_url = os.getenv("OC_API_URL")
+    oc = OpenCollectiveClient(api_url=api_url, token=token, allow_prod=api_url == PROD_URL)
 
     q = """
     query ListExpenses($slug: String!, $status: [ExpenseStatus!]) {
