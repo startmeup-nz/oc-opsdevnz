@@ -4,7 +4,7 @@ import pytest
 import respx
 from httpx import Response
 
-from oc_opsdevnz import OpenCollectiveClient, upsert_collective, upsert_host
+from oc_opsdevnz import OpenCollectiveClient, upsert_collective, upsert_host, upsert_project
 
 
 @respx.mock
@@ -64,6 +64,34 @@ def test_collective_create_and_apply_to_host():
     assert result.updated is True
     assert result.applied_to_host is True
     assert result.account.get("host", {}).get("slug") == "opsdevnz-host"
+    client.close()
+
+
+@respx.mock
+def test_project_create_and_update():
+    responses = [
+        Response(200, json={"data": {"account": {"id": "col-parent", "slug": "opsdevnz", "name": "OpsDev", "type": "COLLECTIVE"}}}),  # parent lookup
+        Response(200, json={"data": {"account": None}}),  # project lookup
+        Response(200, json={"data": {"createProject": {"id": "proj1", "slug": "getjjobs-nz", "name": "GetJJobs", "type": "PROJECT", "parent": {"slug": "opsdevnz"}}}}),
+        Response(200, json={"data": {"editAccount": {"id": "proj1", "slug": "getjjobs-nz", "name": "GetJJobs", "description": "Jobs project", "tags": ["jobs"]}}}),
+    ]
+    respx.post().mock(side_effect=responses)
+
+    client = OpenCollectiveClient(token="t")
+    result = upsert_project(
+        client,
+        {
+            "name": "GetJJobs",
+            "slug": "getjjobs-nz",
+            "parent_slug": "opsdevnz",
+            "description": "Jobs project",
+            "tags": ["jobs"],
+        },
+    )
+
+    assert result.created is True
+    assert result.updated is True
+    assert result.account["slug"] == "getjjobs-nz"
     client.close()
 
 

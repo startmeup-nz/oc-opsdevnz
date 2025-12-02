@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 from .oc_client import OpenCollectiveClient, PROD_URL
-from .operations import UpsertResult, load_items, upsert_collective, upsert_host
+from .operations import UpsertResult, load_items, upsert_collective, upsert_host, upsert_project
 
 WHOAMI_QUERY = """
 query Account($slug: String!) {
@@ -88,6 +88,23 @@ def cmd_collectives(args) -> int:
     return 0
 
 
+def cmd_projects(args) -> int:
+    path = Path(args.file)
+    if not path.exists():
+        print(f"projects file not found: {path}", file=sys.stderr)
+        return 2
+
+    items = load_items(path)
+    client = _client_from_args(args)
+
+    for item in items:
+        if args.only and item.get("slug") != args.only:
+            continue
+        result = upsert_project(client, item)
+        _print_result("project", result)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="OpenCollective automation helpers (staging-first).")
     sub = ap.add_subparsers(dest="command", required=True)
@@ -108,6 +125,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_colls.add_argument("--file", default="collectives.yaml", help="Path to collectives YAML/JSON (array).")
     p_colls.add_argument("--only", help="Only process the matching slug.")
     p_colls.set_defaults(func=cmd_collectives)
+
+    p_projects = sub.add_parser("projects", help="Create/update projects under a parent collective from YAML/JSON.")
+    _add_common_options(p_projects)
+    p_projects.add_argument("--file", default="projects.yaml", help="Path to projects YAML/JSON (array).")
+    p_projects.add_argument("--only", help="Only process the matching slug.")
+    p_projects.set_defaults(func=cmd_projects)
 
     return ap
 
