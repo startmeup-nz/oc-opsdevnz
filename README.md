@@ -6,7 +6,7 @@ Staging-first OpenCollective client and CLI for OpsDev.nz. Resolves tokens from 
 - httpx GraphQL client with retries/backoff and redacted error messages.
 - Environment guardrails: staging by default, `for_prod()`/`--prod` required for production.
 - Token resolution via `OC_SECRET_REF`/`OC_TOKEN` using `op-opsdevnz`.
-- CLI helpers for whoami, host organization upserts, and collective creation/apply-to-host flows from YAML/JSON.
+- CLI helpers for whoami, host organization upserts, collective creation/apply-to-host flows, and project creation from YAML/JSON.
 
 ## Install
 ```bash
@@ -27,6 +27,9 @@ oc-opsdevnz hosts --file hosts.yaml
 
 # Create/update collectives and optionally apply to a host
 oc-opsdevnz collectives --file collectives.yaml
+
+# Create/update projects under a parent collective
+oc-opsdevnz projects --file projects.yaml
 ```
 Use `--prod` to target production (only when you mean it), or `--api-url` to override explicitly.
 
@@ -52,6 +55,15 @@ Use `--prod` to target production (only when you mean it), or `--api-url` to ove
   host_apply_message: Please host OpsDev.NZ on staging.
 ```
 
+`projects.yaml`:
+```yaml
+- name: GetJJobs.NZ
+  slug: getjjobs-nz
+  parent_slug: opsdev-nz
+  description: Pilot job-matching project under OpsDev.NZ.
+  tags: [jobs, pilot]
+```
+
 ## Python API
 ```python
 from oc_opsdevnz import OpenCollectiveClient
@@ -64,12 +76,14 @@ prod_client = OpenCollectiveClient.for_prod()  # explicit opt-in
 
 Helpers for YAML-driven workflows:
 ```python
-from oc_opsdevnz import load_items, upsert_collective, upsert_host
+from oc_opsdevnz import load_items, upsert_collective, upsert_host, upsert_project
 from pathlib import Path
 
 client = OpenCollectiveClient.for_staging()
 for host in load_items(Path("hosts.yaml")):
     upsert_host(client, host)
+for project in load_items(Path("projects.yaml")):
+    upsert_project(client, project)
 ```
 
 ## Development

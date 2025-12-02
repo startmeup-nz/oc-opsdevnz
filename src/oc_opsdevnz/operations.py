@@ -77,6 +77,18 @@ mutation CreateCollective($input: CollectiveCreateInput!) {
 }
 """
 
+MUTATION_CREATE_PROJECT = """
+mutation CreateProject($project: ProjectCreateInput!, $parent: AccountReferenceInput!) {
+  createProject(project: $project, parent: $parent) {
+    id
+    slug
+    name
+    type
+    ... on AccountWithParent { parent { slug } }
+  }
+}
+"""
+
 MUTATION_APPLY_TO_HOST = """
 mutation ApplyToHost($collective: AccountReferenceInput!, $host: AccountReferenceInput!, $message: String) {
   applyToHost(collective: $collective, host: $host, message: $message) {
@@ -189,7 +201,7 @@ def upsert_host(client: OpenCollectiveClient, item: Dict[str, Any]) -> UpsertRes
     acc = _get_account_if_exists(client, slug)
 
     if not acc:
-        org_input = {
+        org_input: Dict[str, Any] = {
             "name": desired_name,
             "slug": slug,
             "description": desired_desc,
@@ -287,3 +299,51 @@ def upsert_collective(client: OpenCollectiveClient, item: Dict[str, Any]) -> Ups
             applied = True
 
     return UpsertResult(slug=slug, created=created, updated=updated, applied_to_host=applied, account=acc)
+
+
+def upsert_project(client: OpenCollectiveClient, item: Dict[str, Any]) -> UpsertResult:
+    slug = item["slug"]
+    parent_slug = item.get("parent_slug") or item.get("parentSlug")
+    if not parent_slug:
+        raise ValueError("Projects require parent_slug (the owning collective slug).")
+
+    desired_name = item["name"]
+    desired_desc = item.get("description") or ""
+    desired_tags = _norm_tags(item.get("tags"))
+
+    # Ensure parent exists
+    parent = _get_account_if_exists(client, parent_slug)
+    if not parent:
+        raise RuntimeError(f"Parent collective '{parent_slug}' not found; create it first.")
+
+    created = False
+    updated = False
+
+    acc = _get_account_if_exists(client, slug)
+    if not acc:
+        project_input: Dict[str, Any] = {
+            "name": desired_name,
+            "slug": slug,
+            "description": desired_desc,
+            "tags": desired_tags,
+        }
+        acc = client.graphql(MUTATION_CREATE_PROJECT, {"project": project_input, "parent": {"slug": parent_slug}})["createProject"]
+        created = True
+
+    need_update = (
+        acc.get("name") != desired_name
+        or (acc.get("description") or "") != desired_desc
+        or not _arrays_equal(acc.get("tags"), desired_tags)
+    )
+
+    if need_update:
+        patch = {
+            "id": acc["id"],
+            "name": desired_name,
+            "description": desired_desc,
+            "tags": desired_tags,
+        }
+        acc = client.graphql(MUTATION_EDIT_ACCOUNT, {"account": patch})["editAccount"]
+        updated = True
+
+    return UpsertResult(slug=slug, created=created, updated=updated, account=acc)

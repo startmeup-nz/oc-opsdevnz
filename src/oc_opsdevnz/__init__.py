@@ -6,7 +6,7 @@ from .oc_client import (
     STAGING_URL,
     TransportError,
 )
-from .operations import UpsertResult, load_items, upsert_collective, upsert_host
+from .operations import UpsertResult, load_items, upsert_collective, upsert_host, upsert_project
 
 __all__ = [
     "GraphQLError",
@@ -19,4 +19,5 @@ __all__ = [
     "load_items",
     "upsert_collective",
     "upsert_host",
+    "upsert_project",
 ]
