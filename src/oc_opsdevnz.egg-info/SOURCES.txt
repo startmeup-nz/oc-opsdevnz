@@ -12,5 +12,6 @@ src/oc_opsdevnz.egg-info/dependency_links.txt
 src/oc_opsdevnz.egg-info/entry_points.txt
 src/oc_opsdevnz.egg-info/requires.txt
 src/oc_opsdevnz.egg-info/top_level.txt
+tests/test_cli_parser.py
 tests/test_client.py
 tests/test_operations.py

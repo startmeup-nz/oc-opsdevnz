@@ -3,6 +3,7 @@ import json
 import sys
 from pathlib import Path
 
+from . import __version__
 from .oc_client import OpenCollectiveClient, PROD_URL
 from .operations import UpsertResult, load_items, upsert_collective, upsert_host, upsert_project
 
@@ -55,7 +56,7 @@ def cmd_whoami(args) -> int:
 
 
 def cmd_hosts(args) -> int:
-    path = Path(args.file)
+    path = Path(args.config or args.file)
     if not path.exists():
         print(f"hosts file not found: {path}", file=sys.stderr)
         return 2
@@ -72,7 +73,7 @@ def cmd_hosts(args) -> int:
 
 
 def cmd_collectives(args) -> int:
-    path = Path(args.file)
+    path = Path(args.config or args.file)
     if not path.exists():
         print(f"collectives file not found: {path}", file=sys.stderr)
         return 2
@@ -89,7 +90,7 @@ def cmd_collectives(args) -> int:
 
 
 def cmd_projects(args) -> int:
-    path = Path(args.file)
+    path = Path(args.config or args.file)
     if not path.exists():
         print(f"projects file not found: {path}", file=sys.stderr)
         return 2
@@ -105,6 +106,11 @@ def cmd_projects(args) -> int:
     return 0
 
 
+def cmd_version(args) -> int:  # noqa: ARG001 - required by argparse
+    print(__version__)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="OpenCollective automation helpers (staging-first).")
     sub = ap.add_subparsers(dest="command", required=True)
@@ -117,20 +123,31 @@ def build_parser() -> argparse.ArgumentParser:
     p_hosts = sub.add_parser("hosts", help="Create/update host organizations from YAML/JSON.")
     _add_common_options(p_hosts)
     p_hosts.add_argument("--file", default="hosts.yaml", help="Path to hosts YAML/JSON (array).")
+    p_hosts.add_argument("--config", help="Alias for --file when using env-named configs (e.g., staging-host.yaml).")
     p_hosts.add_argument("--only", help="Only process the matching slug.")
     p_hosts.set_defaults(func=cmd_hosts)
 
     p_colls = sub.add_parser("collectives", help="Create/update collectives and optionally apply to a host.")
     _add_common_options(p_colls)
     p_colls.add_argument("--file", default="collectives.yaml", help="Path to collectives YAML/JSON (array).")
+    p_colls.add_argument(
+        "--config", help="Alias for --file when using env-named configs (e.g., staging-collectives.yaml)."
+    )
     p_colls.add_argument("--only", help="Only process the matching slug.")
     p_colls.set_defaults(func=cmd_collectives)
 
     p_projects = sub.add_parser("projects", help="Create/update projects under a parent collective from YAML/JSON.")
     _add_common_options(p_projects)
     p_projects.add_argument("--file", default="projects.yaml", help="Path to projects YAML/JSON (array).")
+    p_projects.add_argument(
+        "--config", help="Alias for --file when using env-named configs (e.g., staging-projects.yaml)."
+    )
     p_projects.add_argument("--only", help="Only process the matching slug.")
     p_projects.set_defaults(func=cmd_projects)
+
+    p_version = sub.add_parser("version", help="Print package version.")
+    _add_common_options(p_version)
+    p_version.set_defaults(func=cmd_version)
 
     return ap
 

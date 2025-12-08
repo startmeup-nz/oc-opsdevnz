@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: oc-opsdevnz
-Version: 0.1.1
+Version: 0.1.2
 Summary: OpenCollective API helper (OpsDev.nz), staging-first with 1Password token resolution
 Author: John Billings
 Requires-Python: >=3.10
@@ -40,6 +40,9 @@ export OC_SECRET_REF="op://startmeup.nz/api-staging.opencollective.com/credentia
 # Fetch an account/collective by slug
 oc-opsdevnz whoami opsdevnz
 
+# Show installed version
+oc-opsdevnz version
+
 # Create/update host orgs from YAML
 oc-opsdevnz hosts --file hosts.yaml
 
@@ -49,7 +52,7 @@ oc-opsdevnz collectives --file collectives.yaml
 # Create/update projects under a parent collective
 oc-opsdevnz projects --file projects.yaml
 ```
-Use `--prod` to target production (only when you mean it), or `--api-url` to override explicitly.
+Use `--file` or `--config` to point at any filename you prefer; defaults above are just examples. Use `--prod` to target production (only when you mean it), or `--api-url` to override explicitly.
 
 ### Example YAML shapes
 `hosts.yaml` (real staging values):
