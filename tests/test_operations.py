@@ -9,10 +9,34 @@ from oc_opsdevnz import OpenCollectiveClient, upsert_collective, upsert_host, up
 
 @respx.mock
 def test_upsert_host_creates_and_updates():
+    long_desc = "Long copy"
+
+    def _edit_account(request):
+        payload = json.loads(request.content)
+        account = payload["variables"]["account"]
+        assert account["longDescription"] == long_desc
+        return Response(
+            200,
+            json={
+                "data": {
+                    "editAccount": {
+                        "id": "org1",
+                        "slug": "startmeupnz",
+                        "name": "StartMeUp.NZ",
+                        "description": "Platform team",
+                        "longDescription": long_desc,
+                        "tags": ["ops"],
+                        "website": "https://startmeup.nz",
+                        "socialLinks": [{"type": "WEBSITE", "url": "https://startmeup.nz"}],
+                    }
+                }
+            },
+        )
+
     responses = [
         Response(200, json={"data": {"account": None}}),  # lookup
         Response(200, json={"data": {"createOrganization": {"id": "org1", "slug": "startmeupnz", "name": "StartMeUp.NZ", "type": "ORGANIZATION"}}}),
-        Response(200, json={"data": {"editAccount": {"id": "org1", "slug": "startmeupnz", "name": "StartMeUp.NZ", "description": "Platform team", "tags": ["ops"], "website": "https://startmeup.nz", "socialLinks": [{"type": "WEBSITE", "url": "https://startmeup.nz"}]}}}),
+        _edit_account,
     ]
     respx.post().mock(side_effect=responses)
 
@@ -23,6 +47,7 @@ def test_upsert_host_creates_and_updates():
             "name": "StartMeUp.NZ",
             "slug": "startmeupnz",
             "description": "Platform team",
+            "long_description": long_desc,
             "website": "https://startmeup.nz",
             "tags": ["ops"],
             "currency": "NZD",

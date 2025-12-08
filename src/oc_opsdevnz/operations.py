@@ -18,7 +18,7 @@ query Account($slug: String!) {
     name
     type
     isHost
-    ... on Account { description tags website }
+    ... on Account { description longDescription tags website }
     ... on AccountWithHost { host { slug name } }
     ... on Account { socialLinks { type url } }
     stats { balance { currency } }
@@ -57,6 +57,7 @@ mutation EditAccount($account: AccountUpdateInput!) {
     slug
     name
     description
+    longDescription
     tags
     website
     socialLinks { type url }
@@ -190,6 +191,7 @@ def upsert_host(client: OpenCollectiveClient, item: Dict[str, Any]) -> UpsertRes
     slug = item["slug"]
     desired_name = item["name"]
     desired_desc = item.get("description") or ""
+    desired_long_desc = item.get("long_description") or item.get("longDescription")
     desired_site = item.get("website")
     desired_tags = _norm_tags(item.get("tags"))
     desired_currency = _upper_or_none(item.get("currency"))
@@ -217,6 +219,10 @@ def upsert_host(client: OpenCollectiveClient, item: Dict[str, Any]) -> UpsertRes
     need_update = (
         acc.get("name") != desired_name
         or (acc.get("description") or "") != desired_desc
+        or (
+            desired_long_desc is not None
+            and (acc.get("longDescription") or "") != str(desired_long_desc)
+        )
         or not _arrays_equal(acc.get("tags"), desired_tags)
         or website != desired_site
     )
@@ -229,6 +235,8 @@ def upsert_host(client: OpenCollectiveClient, item: Dict[str, Any]) -> UpsertRes
             "tags": desired_tags,
             "socialLinks": merged_links,
         }
+        if desired_long_desc is not None:
+            patch["longDescription"] = str(desired_long_desc)
         acc = client.graphql(MUTATION_EDIT_ACCOUNT, {"account": patch})["editAccount"]
         updated = True
 

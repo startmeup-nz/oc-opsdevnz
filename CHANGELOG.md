@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.1.1 (unreleased)
+## 0.1.2 (unreleased)
+- Add `--config` alias to all CLI commands so callers can pass any config filename without changing defaults.
+- Refresh docs/examples to clarify staging-first usage and flexible config naming.
+- Add `version` subcommand to print the installed package version.
+- Hosts: apply `long_description`/`longDescription` from YAML directly (no helper script needed).
+
+## 0.1.1
 - Add project YAML/CLI support (`oc-opsdevnz projects`) to create/update projects under a parent collective.
 - Fix project creation payload: parent is passed as a separate variable to `createProject` (not inside `ProjectCreateInput`).
 - Refresh README/examples.

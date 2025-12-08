@@ -22,6 +22,9 @@ export OC_SECRET_REF="op://startmeup.nz/api-staging.opencollective.com/credentia
 # Fetch an account/collective by slug
 oc-opsdevnz whoami opsdevnz
 
+# Show installed version
+oc-opsdevnz version
+
 # Create/update host orgs from YAML
 oc-opsdevnz hosts --file hosts.yaml
 
@@ -31,7 +34,7 @@ oc-opsdevnz collectives --file collectives.yaml
 # Create/update projects under a parent collective
 oc-opsdevnz projects --file projects.yaml
 ```
-Use `--prod` to target production (only when you mean it), or `--api-url` to override explicitly.
+Use `--file` or `--config` to point at any filename you prefer; defaults above are just examples. Use `--prod` to target production (only when you mean it), or `--api-url` to override explicitly.
 
 ### Example YAML shapes
 `hosts.yaml` (real staging values):
