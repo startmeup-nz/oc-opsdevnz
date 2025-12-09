@@ -1,9 +1,68 @@
-# Releasing oc-opsdevnz
+# Releasing `oc-opsdevnz`
 
-#1. Ensure staging/prod guardrails still hold: default is staging; prod must be explicit (`for_prod`/`--prod`).
-1. We are going to be changing #1 in the next release... prod will become default then.
-2. Run tests: `pytest`.
-3. Update `CHANGELOG.md` and bump the version in `pyproject.toml`.
-4. Build the wheel and sdist: `python -m build`.
-5. Publish to TestPyPI first, verify install, then publish to PyPI.
-6. Tag the release and announce in the OpsDev.nz ops channel.
+Publish to TestPyPI first, verify, then ship to PyPI.
+
+## Prerequisites
+
+- Access to the `startmeup-nz` TestPyPI/PyPI tokens (stored in 1Password).
+- `twine` and `build` installed (`pip install -e .[dev]` in your venv).
+- Clean `main` and tests green.
+
+## Workflow
+
+1. **Guardrails** 
+
+Default API target is staging; prod requires `--prod`. (Future change will flip default to prod—update docs when that happens.)
+
+2. **Version + changelog** 
+
+Bump `project.version` in `pyproject.toml` and add a `CHANGELOG.md` entry.
+
+3. **Tests**
+
+   ```
+   pytest
+   ```
+
+4. **Build**
+
+   ```
+   rm -rf dist/
+   python -m build
+   python -m twine check dist/*
+   ```
+
+5. **TestPyPI**
+
+   ```
+   twine upload --repository testpypi dist/*
+   ```
+
+   Smoke-test:
+
+   ```
+   python -m venv /tmp/oc-opsdevnz-test && source /tmp/oc-opsdevnz-test/bin/activate
+   pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple oc-opsdevnz==<new-version>
+   oc-opsdevnz version
+   ```
+
+6. **PyPI**
+
+   ```
+   python -m twine upload --repository pypi dist/*
+   ```
+
+   Smoke-test:
+   
+   ```
+   pip install oc-opsdevnz==<new-version>
+   oc-opsdevnz version
+   ```
+
+7. **Tag + push**
+
+   ```
+   # prefer prefixed tag
+   git tag -a oc-opsdevnz-v<new-version> -m "Release <new-version>"
+   git push origin main oc-opsdevnz-v<new-version>
+   ```
