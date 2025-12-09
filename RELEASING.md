@@ -10,9 +10,9 @@ Publish to TestPyPI first, verify, then ship to PyPI.
 
 ## Workflow
 
-1. **Guardrails** 
+1. **Guardrails**
 
-Default API target is staging; prod requires `--prod`. (Future change will flip default to prod—update docs when that happens.)
+Default API target is **production**; use `--staging`/`--test` for staging.
 
 2. **Version + changelog** 
 

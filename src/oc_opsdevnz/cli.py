@@ -20,7 +20,9 @@ query Account($slug: String!) {
 
 
 def _add_common_options(ap: argparse.ArgumentParser) -> None:
-    ap.add_argument("--prod", action="store_true", help="Use production API (staging is the default).")
+    ap.add_argument("--prod", action="store_true", help="Use production API (default).")
+    ap.add_argument("--staging", action="store_true", help="Use staging API.")
+    ap.add_argument("--test", action="store_true", help="Alias for --staging.")
     ap.add_argument("--api-url", help="Override GraphQL endpoint.")
     ap.add_argument("--token", help="Override token (defaults to OC_SECRET_REF/OC_TOKEN).")
     ap.add_argument("--auth-mode", choices=["personal", "oauth"], default="personal", help="Personal-Token vs OAuth bearer.")
@@ -31,9 +33,10 @@ def _client_from_args(args) -> OpenCollectiveClient:
     kwargs = {"token": args.token, "auth_mode": args.auth_mode, "log_requests": args.log_requests}
     if args.api_url:
         return OpenCollectiveClient(api_url=args.api_url, allow_prod=args.api_url == PROD_URL, **kwargs)
-    if args.prod:
-        return OpenCollectiveClient.for_prod(**kwargs)
-    return OpenCollectiveClient.for_staging(**kwargs)
+    if args.staging or args.test:
+        return OpenCollectiveClient.for_staging(**kwargs)
+    # Default to prod; --prod is accepted for explicitness/backward compatibility
+    return OpenCollectiveClient.for_prod(**kwargs)
 
 
 def _print_result(label: str, result: UpsertResult) -> None:
@@ -112,7 +115,7 @@ def cmd_version(args) -> int:  # noqa: ARG001 - required by argparse
 
 
 def build_parser() -> argparse.ArgumentParser:
-    ap = argparse.ArgumentParser(description="OpenCollective automation helpers (staging-first).")
+    ap = argparse.ArgumentParser(description="OpenCollective automation helpers (prod by default).")
     sub = ap.add_subparsers(dest="command", required=True)
 
     p_whoami = sub.add_parser("whoami", help="Fetch account/collective metadata by slug.")
