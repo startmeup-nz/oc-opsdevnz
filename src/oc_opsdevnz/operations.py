@@ -18,7 +18,7 @@ query Account($slug: String!) {
     name
     type
     isHost
-    ... on Account { description longDescription tags website }
+    ... on Account { description longDescription tags website currency }
     ... on AccountWithHost { host { slug name } }
     ... on Account { socialLinks { type url } }
     stats { balance { currency } }
@@ -58,6 +58,7 @@ mutation EditAccount($account: AccountUpdateInput!) {
     name
     description
     longDescription
+    currency
     tags
     website
     socialLinks { type url }
@@ -140,12 +141,18 @@ def _upper_or_none(v: Optional[str]) -> Optional[str]:
     return (str(v).upper() if v is not None else None)
 
 
+def _normalize_url(url: Optional[str]) -> Optional[str]:
+    if not url:
+        return None
+    return str(url).rstrip("/")
+
+
 def _extract_website(acc: Dict[str, Any]) -> Optional[str]:
     if acc.get("website"):
-        return acc["website"]
+        return _normalize_url(acc["website"])
     for link in acc.get("socialLinks") or []:
         if link and link.get("type") == "WEBSITE":
-            return link.get("url")
+            return _normalize_url(link.get("url"))
     return None
 
 
@@ -159,6 +166,13 @@ def _upsert_website_link(links: list[Dict[str, Any]], website: Optional[str]) ->
     filtered = [l for l in links if (l or {}).get("type") != "WEBSITE"]
     filtered.append({"type": "WEBSITE", "url": website})
     return filtered
+
+
+def _extract_currency(acc: Dict[str, Any]) -> Optional[str]:
+    # Prefer explicit currency field; fallback to balance currency if present.
+    if acc.get("currency"):
+        return _upper_or_none(acc.get("currency"))
+    return _upper_or_none(((acc.get("stats") or {}).get("balance") or {}).get("currency"))
 
 
 def _get_account_if_exists(client: OpenCollectiveClient, slug: str) -> Optional[Dict[str, Any]]:
@@ -192,7 +206,7 @@ def upsert_host(client: OpenCollectiveClient, item: Dict[str, Any]) -> UpsertRes
     desired_name = item["name"]
     desired_desc = item.get("description") or ""
     desired_long_desc = item.get("long_description") or item.get("longDescription")
-    desired_site = item.get("website")
+    desired_site = _normalize_url(item.get("website"))
     desired_tags = _norm_tags(item.get("tags"))
     desired_currency = _upper_or_none(item.get("currency"))
 
@@ -241,7 +255,7 @@ def upsert_host(client: OpenCollectiveClient, item: Dict[str, Any]) -> UpsertRes
         updated = True
 
     # Currency comparison is informational only.
-    current_currency = _upper_or_none(((acc.get("stats") or {}).get("balance") or {}).get("currency"))
+    current_currency = _extract_currency(acc)
     if desired_currency and desired_currency != current_currency:
         warnings.append(
             f"Currency mismatch: org has {current_currency or 'unset'}, yaml has {desired_currency}. "

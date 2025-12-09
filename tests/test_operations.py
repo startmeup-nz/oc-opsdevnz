@@ -24,10 +24,11 @@ def test_upsert_host_creates_and_updates():
                         "slug": "startmeupnz",
                         "name": "StartMeUp.NZ",
                         "description": "Platform team",
+                        "currency": "NZD",
                         "longDescription": long_desc,
                         "tags": ["ops"],
-                        "website": "https://startmeup.nz",
-                        "socialLinks": [{"type": "WEBSITE", "url": "https://startmeup.nz"}],
+                        "website": "https://startmeup.nz/",
+                        "socialLinks": [{"type": "WEBSITE", "url": "https://startmeup.nz/"}],
                     }
                 }
             },
@@ -56,6 +57,57 @@ def test_upsert_host_creates_and_updates():
 
     assert result.created is True
     assert result.updated is True
+    assert result.warnings == []
+    assert result.account["slug"] == "startmeupnz"
+    client.close()
+
+
+@respx.mock
+def test_upsert_host_no_update_when_same():
+    respx.post().mock(
+        side_effect=[
+            Response(
+                200,
+                json={
+                    "data": {
+                        "account": {
+                            "__typename": "Organization",
+                            "id": "org1",
+                            "slug": "startmeupnz",
+                            "name": "StartMeUp.NZ",
+                            "type": "ORGANIZATION",
+                            "isHost": True,
+                            "description": "Platform team",
+                            "longDescription": "Long copy",
+                            "currency": "NZD",
+                            "tags": ["ops"],
+                            "website": "https://startmeup.nz/",
+                            "socialLinks": [{"type": "WEBSITE", "url": "https://startmeup.nz/"}],
+                            "stats": {"balance": {"currency": "NZD"}},
+                        }
+                    }
+                },
+            )
+        ]
+    )
+
+    client = OpenCollectiveClient(token="t")
+    result = upsert_host(
+        client,
+        {
+            "name": "StartMeUp.NZ",
+            "slug": "startmeupnz",
+            "description": "Platform team",
+            "long_description": "Long copy",
+            "website": "https://startmeup.nz",
+            "tags": ["ops"],
+            "currency": "NZD",
+        },
+    )
+
+    assert result.created is False
+    assert result.updated is False
+    assert result.warnings == []
     assert result.account["slug"] == "startmeupnz"
     client.close()
 

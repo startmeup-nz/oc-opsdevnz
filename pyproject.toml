@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "oc-opsdevnz"
-version = "0.1.2"
-description = "OpenCollective API helper (OpsDev.nz), staging-first with 1Password token resolution"
+version = "0.2.3"
+description = "OpenCollective API helper (OpsDev.nz), prod-default with 1Password token resolution"
 authors = [{ name = "John Billings" }]
 readme = "README.md"
 requires-python = ">=3.10"

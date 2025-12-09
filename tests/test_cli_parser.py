@@ -11,6 +11,9 @@ def test_hosts_accepts_config_alias():
     assert args.config == "opencollective/staging-host.yaml"
     # --file keeps its default; --config is a separate alias
     assert args.file == "hosts.yaml"
+    assert args.staging is False
+    assert args.test is False
+    assert args.prod is False
 
 
 def test_collectives_accepts_config_alias():
@@ -23,6 +26,9 @@ def test_projects_accepts_config_alias():
     args = _parse(["projects", "--config", "opencollective/staging-projects.yaml"])
     assert args.config == "opencollective/staging-projects.yaml"
     assert args.file == "projects.yaml"
+    assert args.staging is False
+    assert args.test is False
+    assert args.prod is False
 
 
 def test_version_command_outputs_version(capsys):
@@ -33,3 +39,13 @@ def test_version_command_outputs_version(capsys):
     args.func(args)
     out = capsys.readouterr().out.strip()
     assert out
+
+
+def test_staging_flags_are_aliases():
+    args = _parse(["hosts", "--staging"])
+    assert args.staging is True
+    assert args.test is False
+
+    args2 = _parse(["hosts", "--test"])
+    assert args2.test is True
+    assert args2.staging is False

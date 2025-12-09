@@ -10,9 +10,9 @@ Publish to TestPyPI first, verify, then ship to PyPI.
 
 ## Workflow
 
-1. **Guardrails** 
+1. **Guardrails**
 
-Default API target is staging; prod requires `--prod`. (Future change will flip default to prod—update docs when that happens.)
+Default API target is **production**; use `--staging`/`--test` for staging.
 
 2. **Version + changelog** 
 
@@ -41,7 +41,6 @@ Bump `project.version` in `pyproject.toml` and add a `CHANGELOG.md` entry.
    Smoke-test:
 
    ```
-   python -m venv /tmp/oc-opsdevnz-test && source /tmp/oc-opsdevnz-test/bin/activate
    pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple oc-opsdevnz==<new-version>
    oc-opsdevnz version
    ```
