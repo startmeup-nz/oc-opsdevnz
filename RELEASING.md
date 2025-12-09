@@ -41,7 +41,6 @@ Bump `project.version` in `pyproject.toml` and add a `CHANGELOG.md` entry.
    Smoke-test:
 
    ```
-   python -m venv /tmp/oc-opsdevnz-test && source /tmp/oc-opsdevnz-test/bin/activate
    pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple oc-opsdevnz==<new-version>
    oc-opsdevnz version
    ```

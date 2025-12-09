@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.2.0 (unreleased)
+## 0.2.3 (unreleased)
+- Normalize website URLs to avoid unnecessary updates; currency is read from the account field to suppress false warnings.
+- Host upserts are now fully idempotent when data matches (no-update path covered by tests).
+- Default API target remains production with `--staging`/`--test` for staging.
+
+## 0.2.0
 - Default API target is production; require `--staging`/`--test` to hit staging. `--prod` remains accepted for explicitness.
 - Update docs/examples to reflect prod-first default and staging flags.
 - Bump version command/config alias tests to cover new flags.
