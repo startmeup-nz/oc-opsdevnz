@@ -92,7 +92,11 @@ mutation CreateProject($project: ProjectCreateInput!, $parent: AccountReferenceI
 """
 
 MUTATION_APPLY_TO_HOST = """
-mutation ApplyToHost($collective: AccountReferenceInput!, $host: AccountReferenceInput!, $message: String) {
+mutation ApplyToHost(
+  $collective: AccountReferenceInput!
+  $host: AccountReferenceInput!
+  $message: String
+) {
   applyToHost(collective: $collective, host: $host, message: $message) {
     id
     slug
@@ -138,7 +142,7 @@ def _norm_tags(v: Any) -> list[str]:
 
 
 def _upper_or_none(v: Optional[str]) -> Optional[str]:
-    return (str(v).upper() if v is not None else None)
+    return str(v).upper() if v is not None else None
 
 
 def _normalize_url(url: Optional[str]) -> Optional[str]:
@@ -160,10 +164,12 @@ def _extract_social_links(acc: Dict[str, Any]) -> list[Dict[str, Any]]:
     return list(acc.get("socialLinks") or [])
 
 
-def _upsert_website_link(links: list[Dict[str, Any]], website: Optional[str]) -> list[Dict[str, Any]]:
+def _upsert_website_link(
+    links: list[Dict[str, Any]], website: Optional[str]
+) -> list[Dict[str, Any]]:
     if website is None:
         return links
-    filtered = [l for l in links if (l or {}).get("type") != "WEBSITE"]
+    filtered = [link for link in links if (link or {}).get("type") != "WEBSITE"]
     filtered.append({"type": "WEBSITE", "url": website})
     return filtered
 
@@ -258,8 +264,9 @@ def upsert_host(client: OpenCollectiveClient, item: Dict[str, Any]) -> UpsertRes
     current_currency = _extract_currency(acc)
     if desired_currency and desired_currency != current_currency:
         warnings.append(
-            f"Currency mismatch: org has {current_currency or 'unset'}, yaml has {desired_currency}. "
-            "Update Settings » Info before activating as host."
+            f"Currency mismatch: org has {current_currency or 'unset'},"
+            f" yaml has {desired_currency}."
+            " Update Settings » Info before activating as host."
         )
 
     return UpsertResult(slug=slug, created=created, updated=updated, warnings=warnings, account=acc)
@@ -272,7 +279,11 @@ def upsert_collective(client: OpenCollectiveClient, item: Dict[str, Any]) -> Ups
     desired_tags = _norm_tags(item.get("tags"))
     host_slug = item.get("host_slug") or item.get("hostSlug")
     apply_flag = bool(item.get("apply_to_host") or item.get("applyToHost")) and bool(host_slug)
-    host_apply_message = item.get("host_apply_message") or item.get("hostApplyMessage") or f"Please host {desired_name} (test/staging)."
+    host_apply_message = (
+        item.get("host_apply_message")
+        or item.get("hostApplyMessage")
+        or f"Please host {desired_name} (test/staging)."
+    )
 
     created = False
     updated = False
@@ -291,7 +302,9 @@ def upsert_collective(client: OpenCollectiveClient, item: Dict[str, Any]) -> Ups
             "tags": desired_tags,
             "settings": {"features": {"expenses": True}},
         }
-        acc = client.graphql(MUTATION_CREATE_COLLECTIVE, {"input": create_input})["createCollective"]
+        acc = client.graphql(MUTATION_CREATE_COLLECTIVE, {"input": create_input})[
+            "createCollective"
+        ]
         created = True
 
     need_update = (
@@ -315,12 +328,18 @@ def upsert_collective(client: OpenCollectiveClient, item: Dict[str, Any]) -> Ups
         if current_host_slug != host_slug:
             applied_resp = client.graphql(
                 MUTATION_APPLY_TO_HOST,
-                {"collective": {"id": acc["id"]}, "host": {"slug": host_slug}, "message": host_apply_message},
+                {
+                    "collective": {"id": acc["id"]},
+                    "host": {"slug": host_slug},
+                    "message": host_apply_message,
+                },
             )["applyToHost"]
             acc["host"] = applied_resp.get("host")
             applied = True
 
-    return UpsertResult(slug=slug, created=created, updated=updated, applied_to_host=applied, account=acc)
+    return UpsertResult(
+        slug=slug, created=created, updated=updated, applied_to_host=applied, account=acc
+    )
 
 
 def upsert_project(client: OpenCollectiveClient, item: Dict[str, Any]) -> UpsertResult:
@@ -349,7 +368,9 @@ def upsert_project(client: OpenCollectiveClient, item: Dict[str, Any]) -> Upsert
             "description": desired_desc,
             "tags": desired_tags,
         }
-        acc = client.graphql(MUTATION_CREATE_PROJECT, {"project": project_input, "parent": {"slug": parent_slug}})["createProject"]
+        acc = client.graphql(
+            MUTATION_CREATE_PROJECT, {"project": project_input, "parent": {"slug": parent_slug}}
+        )["createProject"]
         created = True
 
     need_update = (

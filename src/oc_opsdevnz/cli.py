@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .oc_client import OpenCollectiveClient, PROD_URL
+from .oc_client import PROD_URL, OpenCollectiveClient
 from .operations import UpsertResult, load_items, upsert_collective, upsert_host, upsert_project
 
 WHOAMI_QUERY = """
@@ -27,14 +27,23 @@ def _add_common_options(ap: argparse.ArgumentParser) -> None:
     ap.add_argument("--test", action="store_true", help="Alias for --staging.")
     ap.add_argument("--api-url", help="Override GraphQL endpoint.")
     ap.add_argument("--token", help="Override token (defaults to OC_SECRET_REF/OC_TOKEN).")
-    ap.add_argument("--auth-mode", choices=["personal", "oauth"], default="personal", help="Personal-Token vs OAuth bearer.")
-    ap.add_argument("--log-requests", action="store_true", help="Print request summaries (also via OC_DEBUG=1).")
+    ap.add_argument(
+        "--auth-mode",
+        choices=["personal", "oauth"],
+        default="personal",
+        help="Personal-Token vs OAuth bearer.",
+    )
+    ap.add_argument(
+        "--log-requests", action="store_true", help="Print request summaries (also via OC_DEBUG=1)."
+    )
 
 
 def _client_from_args(args) -> OpenCollectiveClient:
     kwargs = {"token": args.token, "auth_mode": args.auth_mode, "log_requests": args.log_requests}
     if args.api_url:
-        return OpenCollectiveClient(api_url=args.api_url, allow_prod=args.api_url == PROD_URL, **kwargs)
+        return OpenCollectiveClient(
+            api_url=args.api_url, allow_prod=args.api_url == PROD_URL, **kwargs
+        )
     if args.staging or args.test:
         return OpenCollectiveClient.for_staging(**kwargs)
     # Default to prod; --prod is accepted for explicitness/backward compatibility
@@ -128,24 +137,36 @@ def build_parser() -> argparse.ArgumentParser:
     p_hosts = sub.add_parser("hosts", help="Create/update host organizations from YAML/JSON.")
     _add_common_options(p_hosts)
     p_hosts.add_argument("--file", default="hosts.yaml", help="Path to hosts YAML/JSON (array).")
-    p_hosts.add_argument("--config", help="Alias for --file when using env-named configs (e.g., staging-host.yaml).")
+    p_hosts.add_argument(
+        "--config", help="Alias for --file when using env-named configs (e.g., staging-host.yaml)."
+    )
     p_hosts.add_argument("--only", help="Only process the matching slug.")
     p_hosts.set_defaults(func=cmd_hosts)
 
-    p_colls = sub.add_parser("collectives", help="Create/update collectives and optionally apply to a host.")
+    p_colls = sub.add_parser(
+        "collectives", help="Create/update collectives and optionally apply to a host."
+    )
     _add_common_options(p_colls)
-    p_colls.add_argument("--file", default="collectives.yaml", help="Path to collectives YAML/JSON (array).")
     p_colls.add_argument(
-        "--config", help="Alias for --file when using env-named configs (e.g., staging-collectives.yaml)."
+        "--file", default="collectives.yaml", help="Path to collectives YAML/JSON (array)."
+    )
+    p_colls.add_argument(
+        "--config",
+        help="Alias for --file when using env-named configs (e.g., staging-collectives.yaml).",
     )
     p_colls.add_argument("--only", help="Only process the matching slug.")
     p_colls.set_defaults(func=cmd_collectives)
 
-    p_projects = sub.add_parser("projects", help="Create/update projects under a parent collective from YAML/JSON.")
+    p_projects = sub.add_parser(
+        "projects", help="Create/update projects under a parent collective from YAML/JSON."
+    )
     _add_common_options(p_projects)
-    p_projects.add_argument("--file", default="projects.yaml", help="Path to projects YAML/JSON (array).")
     p_projects.add_argument(
-        "--config", help="Alias for --file when using env-named configs (e.g., staging-projects.yaml)."
+        "--file", default="projects.yaml", help="Path to projects YAML/JSON (array)."
+    )
+    p_projects.add_argument(
+        "--config",
+        help="Alias for --file when using env-named configs (e.g., staging-projects.yaml).",
     )
     p_projects.add_argument("--only", help="Only process the matching slug.")
     p_projects.set_defaults(func=cmd_projects)

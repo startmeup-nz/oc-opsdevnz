@@ -2,7 +2,7 @@ import pytest
 import respx
 from httpx import Response
 
-from oc_opsdevnz import GraphQLError, HTTPRequestError, OpenCollectiveClient, PROD_URL, STAGING_URL
+from oc_opsdevnz import PROD_URL, STAGING_URL, GraphQLError, HTTPRequestError, OpenCollectiveClient
 
 
 def test_prod_guard():
@@ -32,11 +32,13 @@ def test_http_error_redacts_token():
 
 @respx.mock
 def test_graphql_error_surfaces_message():
-    respx.post(STAGING_URL).mock(return_value=Response(200, json={"errors": [{"message": "No account found with slug"}]}))
+    respx.post(STAGING_URL).mock(
+        return_value=Response(200, json={"errors": [{"message": "No account found with slug"}]})
+    )
 
     client = OpenCollectiveClient(token="secret-token-123")
     with pytest.raises(GraphQLError) as excinfo:
-        client.graphql("query { account(slug:\"x\") { id } }")
+        client.graphql('query { account(slug:"x") { id } }')
 
     assert "No account found with slug" in str(excinfo.value)
     client.close()

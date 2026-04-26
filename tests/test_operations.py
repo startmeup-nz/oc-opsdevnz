@@ -37,7 +37,19 @@ def test_upsert_host_creates_and_updates():
 
     responses = [
         Response(200, json={"data": {"account": None}}),  # lookup
-        Response(200, json={"data": {"createOrganization": {"id": "org1", "slug": "startmeupnz", "name": "StartMeUp.NZ", "type": "ORGANIZATION"}}}),
+        Response(
+            200,
+            json={
+                "data": {
+                    "createOrganization": {
+                        "id": "org1",
+                        "slug": "startmeupnz",
+                        "name": "StartMeUp.NZ",
+                        "type": "ORGANIZATION",
+                    }
+                }
+            },
+        ),
         _edit_account,
     ]
     respx.post().mock(side_effect=responses)
@@ -116,11 +128,61 @@ def test_upsert_host_no_update_when_same():
 @respx.mock
 def test_collective_create_and_apply_to_host():
     responses = [
-        Response(200, json={"data": {"account": {"id": "host1", "slug": "opsdevnz-host", "name": "OpsDev Host", "type": "ORGANIZATION", "isHost": True}}}),  # host check
+        Response(
+            200,
+            json={
+                "data": {
+                    "account": {
+                        "id": "host1",
+                        "slug": "opsdevnz-host",
+                        "name": "OpsDev Host",
+                        "type": "ORGANIZATION",
+                        "isHost": True,
+                    }
+                }
+            },
+        ),  # host check
         Response(200, json={"data": {"account": None}}),  # collective lookup
-        Response(200, json={"data": {"createCollective": {"id": "col1", "slug": "opsdevnz", "name": "OpsDev", "type": "COLLECTIVE"}}}),
-        Response(200, json={"data": {"editAccount": {"id": "col1", "slug": "opsdevnz", "name": "OpsDev", "description": "OpsDev collective", "tags": ["ops"], "host": None}}}),
-        Response(200, json={"data": {"applyToHost": {"id": "col1", "slug": "opsdevnz", "host": {"slug": "opsdevnz-host", "name": "OpsDev Host"}}}}),
+        Response(
+            200,
+            json={
+                "data": {
+                    "createCollective": {
+                        "id": "col1",
+                        "slug": "opsdevnz",
+                        "name": "OpsDev",
+                        "type": "COLLECTIVE",
+                    }
+                }
+            },
+        ),
+        Response(
+            200,
+            json={
+                "data": {
+                    "editAccount": {
+                        "id": "col1",
+                        "slug": "opsdevnz",
+                        "name": "OpsDev",
+                        "description": "OpsDev collective",
+                        "tags": ["ops"],
+                        "host": None,
+                    }
+                }
+            },
+        ),
+        Response(
+            200,
+            json={
+                "data": {
+                    "applyToHost": {
+                        "id": "col1",
+                        "slug": "opsdevnz",
+                        "host": {"slug": "opsdevnz-host", "name": "OpsDev Host"},
+                    }
+                }
+            },
+        ),
     ]
     respx.post().mock(side_effect=responses)
 
@@ -148,10 +210,48 @@ def test_collective_create_and_apply_to_host():
 @respx.mock
 def test_project_create_and_update():
     responses = [
-        Response(200, json={"data": {"account": {"id": "col-parent", "slug": "opsdevnz", "name": "OpsDev", "type": "COLLECTIVE"}}}),  # parent lookup
+        Response(
+            200,
+            json={
+                "data": {
+                    "account": {
+                        "id": "col-parent",
+                        "slug": "opsdevnz",
+                        "name": "OpsDev",
+                        "type": "COLLECTIVE",
+                    }
+                }
+            },
+        ),  # parent lookup
         Response(200, json={"data": {"account": None}}),  # project lookup
-        Response(200, json={"data": {"createProject": {"id": "proj1", "slug": "getjjobs-nz", "name": "GetJJobs", "type": "PROJECT", "parent": {"slug": "opsdevnz"}}}}),
-        Response(200, json={"data": {"editAccount": {"id": "proj1", "slug": "getjjobs-nz", "name": "GetJJobs", "description": "Jobs project", "tags": ["jobs"]}}}),
+        Response(
+            200,
+            json={
+                "data": {
+                    "createProject": {
+                        "id": "proj1",
+                        "slug": "getjjobs-nz",
+                        "name": "GetJJobs",
+                        "type": "PROJECT",
+                        "parent": {"slug": "opsdevnz"},
+                    }
+                }
+            },
+        ),
+        Response(
+            200,
+            json={
+                "data": {
+                    "editAccount": {
+                        "id": "proj1",
+                        "slug": "getjjobs-nz",
+                        "name": "GetJJobs",
+                        "description": "Jobs project",
+                        "tags": ["jobs"],
+                    }
+                }
+            },
+        ),
     ]
     respx.post().mock(side_effect=responses)
 
