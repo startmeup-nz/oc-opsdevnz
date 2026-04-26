@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from op_opsdevnz.onepassword import SecretError, get_secret
 
 

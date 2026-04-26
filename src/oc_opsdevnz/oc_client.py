@@ -1,4 +1,6 @@
 # src/oc_opsdevnz/oc_client.py
+from __future__ import annotations
+
 import hashlib
 import os
 import time

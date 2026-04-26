@@ -1,6 +1,13 @@
 # Changelog
 
-## 0.2.3 (unreleased)
+## 0.2.4
+- Fix `NameError` in test_operations.py — add missing `from pathlib import Path` import.
+- Add `[tool.ruff]`, `[tool.ruff.lint]`, and `[tool.pytest.ini_options]` to pyproject.toml.
+- Add `Programming Language :: Python :: 3.14` classifier and license fields to pyproject.toml.
+- Add `from __future__ import annotations` to source files for Python 3.14 compatibility.
+- Update Development section in README to use `uv sync` / `uv run` workflow.
+
+## 0.2.3
 - Normalize website URLs to avoid unnecessary updates; currency is read from the account field to suppress false warnings.
 - Host upserts are now fully idempotent when data matches (no-update path covered by tests).
 - Default API target remains production with `--staging`/`--test` for staging.
