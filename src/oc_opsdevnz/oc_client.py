@@ -1,4 +1,6 @@
 # src/oc_opsdevnz/oc_client.py
+from __future__ import annotations
+
 import hashlib
 import os
 import time
@@ -34,7 +36,13 @@ class OpenCollectiveError(Exception):
 
 
 class GraphQLError(OpenCollectiveError):
-    def __init__(self, message: str, *, errors: Optional[list[dict[str, Any]]] = None, status_code: Optional[int] = None):
+    def __init__(
+        self,
+        message: str,
+        *,
+        errors: Optional[list[dict[str, Any]]] = None,
+        status_code: Optional[int] = None,
+    ):
         super().__init__(message)
         self.errors = errors or []
         self.status_code = status_code
@@ -86,7 +94,10 @@ class OpenCollectiveClient:
         resolved_api_url = (api_url or DEFAULT_OC_API_URL).rstrip("/")
 
         if resolved_api_url == PROD_URL.rstrip("/") and not allow_prod:
-            raise ValueError("Refusing to use production API without allow_prod=True or OpenCollectiveClient.for_prod().")
+            raise ValueError(
+                "Refusing to use production API without"
+                " allow_prod=True or OpenCollectiveClient.for_prod()."
+            )
 
         self.api_url = resolved_api_url
         self.token = token or get_oc_token()
@@ -101,19 +112,53 @@ class OpenCollectiveClient:
         self._owns_client = http_client is None
 
     @classmethod
-    def for_prod(cls, token: Optional[str] = None, app_name: str = "oc_opsdevnz-prod", auth_mode: AuthMode = "personal", **kwargs):
-        return cls(api_url=PROD_URL, token=token, app_name=app_name, auth_mode=auth_mode, allow_prod=True, **kwargs)
+    def for_prod(
+        cls,
+        token: Optional[str] = None,
+        app_name: str = "oc_opsdevnz-prod",
+        auth_mode: AuthMode = "personal",
+        **kwargs,
+    ):
+        return cls(
+            api_url=PROD_URL,
+            token=token,
+            app_name=app_name,
+            auth_mode=auth_mode,
+            allow_prod=True,
+            **kwargs,
+        )
 
     @classmethod
-    def for_staging(cls, token: Optional[str] = None, app_name: str = "oc_opsdevnz-staging", auth_mode: AuthMode = "personal", **kwargs):
-        return cls(api_url=STAGING_URL, token=token, app_name=app_name, auth_mode=auth_mode, **kwargs)
+    def for_staging(
+        cls,
+        token: Optional[str] = None,
+        app_name: str = "oc_opsdevnz-staging",
+        auth_mode: AuthMode = "personal",
+        **kwargs,
+    ):
+        return cls(
+            api_url=STAGING_URL, token=token, app_name=app_name, auth_mode=auth_mode, **kwargs
+        )
 
     @classmethod
-    def from_secret_ref(cls, secret_ref_env: str = "OC_SECRET_REF", app_name: str = "oc_opsdevnz", auth_mode: AuthMode = "personal", **kwargs):
+    def from_secret_ref(
+        cls,
+        secret_ref_env: str = "OC_SECRET_REF",
+        app_name: str = "oc_opsdevnz",
+        auth_mode: AuthMode = "personal",
+        **kwargs,
+    ):
         token = get_oc_token(secret_ref_env=secret_ref_env)
         api_url = _infer_api_url_from_secret_ref(secret_ref_env)
         allow_prod = api_url == PROD_URL
-        return cls(api_url=api_url, token=token, app_name=app_name, auth_mode=auth_mode, allow_prod=allow_prod, **kwargs)
+        return cls(
+            api_url=api_url,
+            token=token,
+            app_name=app_name,
+            auth_mode=auth_mode,
+            allow_prod=allow_prod,
+            **kwargs,
+        )
 
     def close(self) -> None:
         if self._owns_client:
@@ -135,7 +180,13 @@ class OpenCollectiveClient:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers
 
-    def graphql(self, query: str, variables: Optional[Dict[str, Any]] = None, retry: int = 2, idempotency_key: Optional[str] = None) -> Dict[str, Any]:
+    def graphql(
+        self,
+        query: str,
+        variables: Optional[Dict[str, Any]] = None,
+        retry: int = 2,
+        idempotency_key: Optional[str] = None,
+    ) -> Dict[str, Any]:
         payload = {"query": query, "variables": variables or {}}
         headers = self._headers()
         if idempotency_key:
@@ -164,8 +215,16 @@ class OpenCollectiveClient:
             else:
                 if "errors" in data:
                     errors = data.get("errors") or []
-                    message = errors[0].get("message") if errors and isinstance(errors[0], dict) else "GraphQL error"
-                    raise GraphQLError(_redact(str(message), [self.token]), errors=errors, status_code=resp.status_code)
+                    message = (
+                        errors[0].get("message")
+                        if errors and isinstance(errors[0], dict)
+                        else "GraphQL error"
+                    )
+                    raise GraphQLError(
+                        _redact(str(message), [self.token]),
+                        errors=errors,
+                        status_code=resp.status_code,
+                    )
                 return data.get("data", {})
         raise last_err  # type: ignore
 

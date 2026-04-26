@@ -101,11 +101,15 @@ for project in load_items(Path("projects.yaml")):
 
 ## Development
 
+```bash
+uv sync --extra dev
+uv run python -m pytest tests/ -v
 ```
-cd modules/oc_opsdevnz
-python -m venv .venv && source .venv/bin/activate
-pip install -e .[dev]
-pytest
+
+To run linting:
+
+```bash
+uv run ruff check src tests
 ```
 
 ## License

@@ -1,11 +1,11 @@
 from importlib import metadata
 
 from .oc_client import (
+    PROD_URL,
+    STAGING_URL,
     GraphQLError,
     HTTPRequestError,
     OpenCollectiveClient,
-    PROD_URL,
-    STAGING_URL,
     TransportError,
 )
 from .operations import UpsertResult, load_items, upsert_collective, upsert_host, upsert_project
