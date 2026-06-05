@@ -14,7 +14,7 @@ OpenCollective client and CLI for OpsDev.nz. Resolves tokens from 1Password via 
 ```
 pip install oc-opsdevnz op-opsdevnz
 # or editable while hacking in this repo
-pip install -e modules/oc_opsdevnz[dev]
+pip install -e .[dev]
 ```
 
 ## CLI
