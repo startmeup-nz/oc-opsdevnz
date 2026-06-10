@@ -29,7 +29,8 @@ jobs:
         run: bandit -r src/ -f sarif -o bandit-results.sarif || true
 
       - name: Upload bandit results
-        uses: github/codeql-action/upload-sarif@v3
+        if: hashFiles('bandit-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: bandit-results.sarif
 
@@ -43,7 +44,9 @@ jobs:
           python-version: "3.14"
 
       - name: Install pip-audit
-        run: pip install pip-audit
+        run: |
+          pip install --upgrade pip
+          pip install pip-audit
 
       - name: Audit dependencies
         run: pip-audit
