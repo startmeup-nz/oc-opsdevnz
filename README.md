@@ -2,6 +2,12 @@
 
 OpenCollective client and CLI for OpsDev.nz. Resolves tokens from 1Password via `op-opsdevnz`. Use `--staging`/`--test` to target the staging.opencollective.com API.
 
+## Why
+
+StartMeUp.NZ manages collectives through a lifecycle: onboard, support, offboard.
+Each collective is a YAML file. One command applies it. No clicking through the
+OpenCollective web UI. GitOps for fiscal hosting: versioned, reviewed, repeatable.
+
 ## Features
 
 - httpx GraphQL client with retries/backoff and redacted error messages.
@@ -98,6 +104,23 @@ for host in load_items(Path("hosts.yaml")):
 for project in load_items(Path("projects.yaml")):
     upsert_project(client, project)
 ```
+
+## Documentation
+
+Module documentation lives in `docs/` and is served with [Zensical](https://zensical.org/):
+
+```bash
+# Install Zensical (add to dev dependencies if missing)
+uv add --dev zensical
+
+# Serve docs locally (human — not for AI assistants)
+uv run zensical serve
+
+# Build docs to verify they render without errors
+uv run zensical build
+```
+
+See `zensical.toml` for site configuration and navigation structure.
 
 ## Development
 

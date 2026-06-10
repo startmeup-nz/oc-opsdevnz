@@ -55,3 +55,9 @@ testpaths = ["tests"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[dependency-groups]
+dev = [
+    "pytest-cov>=7.1.0",
+    "zensical>=0.0.45",
+]
