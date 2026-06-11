@@ -1,8 +1,8 @@
 # Authentication Design for oc-opsdevnz
 
-**Status:** Draft  
-**Created:** 2026-06-11  
-**Author:** opsdev  
+**Status:** Draft<br />
+**Created:** 2026-06-11<br />
+**Author:** opsdev
 
 ---
 
@@ -21,13 +21,16 @@ oc-opsdevnz needs to authenticate with the OpenCollective API to manage collecti
 
 ### Secret Resolution (op-opsdevnz)
 
-The `op-opsdevnz` module resolves secrets from 1Password:
+The `op-opsdevnz` module resolves secrets from 1Password.
 
-- Accepts `op://` references (e.g., `op://vault/item/field`)
-- Supports two resolution methods:
-  - **SDK**: Uses `OP_SERVICE_ACCOUNT_TOKEN` environment variable
-  - **CLI**: Falls back to `op` binary if installed and authenticated
-- Returns the secret value plus metadata about which resolver was used
+It accepts `op://` references (e.g., `op://vault/item/field`)
+
+Supports two resolution methods:
+
+1. **SDK**: Uses `OP_SERVICE_ACCOUNT_TOKEN` environment variable
+2. **CLI**: Falls back to `op` binary if installed and authenticated
+
+And returns the secret value plus metadata about which resolver was used.
 
 ### OpenCollective Client (oc-opsdevnz)
 
@@ -48,6 +51,7 @@ OpenCollective supports two authentication methods for API access:
 **Description:** User-scoped API tokens tied to an OpenCollective account.
 
 **Characteristics:**
+
 - Tied to a specific user account
 - Can be scoped (email, account, expenses, orders, transactions, etc.)
 - Can have expiration dates
@@ -55,12 +59,14 @@ OpenCollective supports two authentication methods for API access:
 - No user interaction required for automation
 
 **Use Cases:**
+
 - Automation and scripting
 - Single-user tools
 - CI/CD pipelines
 - Integration with external services
 
 **Limitations:**
+
 - Tied to a user account (if user leaves, token becomes invalid)
 - No built-in token refresh mechanism
 - Manual rotation required
@@ -70,6 +76,7 @@ OpenCollective supports two authentication methods for API access:
 **Description:** Standard OAuth 2.0 authorization code flow for multi-user applications.
 
 **Characteristics:**
+
 - Requires user interaction (redirect-based authorization)
 - Scoped access (same scopes as Personal Tokens)
 - Access tokens expire and require refresh
@@ -77,11 +84,13 @@ OpenCollective supports two authentication methods for API access:
 - Supports 2FA with special configuration
 
 **Use Cases:**
+
 - Multi-user SaaS applications
 - Web applications where users authenticate via OpenCollective
 - Applications that need to act on behalf of different users
 
 **Limitations:**
+
 - Requires user interaction (not suitable for headless automation)
 - More complex to implement (redirect flow, token refresh)
 - Requires registering an OAuth application
@@ -125,12 +134,14 @@ To move from development/testing to production, we need to address:
 **Problem:** Personal Tokens can expire. If a token expires, automation breaks.
 
 **Requirements:**
+
 - Document token expiration date (if set)
 - Establish a rotation process (generate new token, update 1Password, test)
 - Set up monitoring/alerting for token expiration (if possible)
 - Document emergency rotation procedure (if token is compromised)
 
 **Implementation:**
+
 - Store token expiration date in 1Password item metadata or notes
 - Create a runbook for token rotation
 - Consider a scheduled task that checks token validity and alerts before expiration
@@ -140,11 +151,13 @@ To move from development/testing to production, we need to address:
 **Problem:** Overly permissive tokens increase security risk if compromised.
 
 **Requirements:**
+
 - Review what scopes the token actually needs
 - Grant minimal scopes required for the operations we perform
 - Document which scopes are needed and why
 
 **Implementation:**
+
 - Audit oc-opsdevnz operations to determine required scopes
 - Update token configuration in OpenCollective to grant only those scopes
 - Document scope requirements in this design doc or in operational documentation
@@ -154,11 +167,13 @@ To move from development/testing to production, we need to address:
 **Problem:** If the token is tied to a personal account (e.g., `john@opsdev.nz`) and that person leaves the collective, automation breaks.
 
 **Requirements:**
+
 - Consider creating a dedicated OpenCollective account for automation
 - Use a service account (e.g., `automation@opsdev.nz`) instead of a personal account
 - Document the account ownership and access model
 
 **Implementation:**
+
 - Create a dedicated OpenCollective account for OpsDev.nz automation
 - Generate Personal Token from that account
 - Store credentials in 1Password with clear ownership documentation
@@ -169,6 +184,7 @@ To move from development/testing to production, we need to address:
 **Problem:** Without documentation, token management becomes ad-hoc and error-prone.
 
 **Requirements:**
+
 - Document where the token lives in 1Password (vault, item name, field)
 - Document what scopes the token has
 - Document when the token expires (if applicable)
@@ -176,6 +192,7 @@ To move from development/testing to production, we need to address:
 - Document how to test the token (e.g., `oc-opsdevnz whoami`)
 
 **Implementation:**
+
 - Create operational documentation (runbook) for token management
 - Include token metadata in 1Password item notes
 - Link to this design doc from operational documentation
@@ -185,11 +202,13 @@ To move from development/testing to production, we need to address:
 **Problem:** Staging and production tokens should be separate to prevent accidental changes.
 
 **Requirements:**
+
 - Use separate tokens for staging and production
 - Store tokens in separate 1Password items
 - Ensure code/configuration clearly distinguishes between environments
 
 **Implementation:**
+
 - Staging token: `op://startmeup.nz/opencollective-staging/token`
 - Production token: `op://startmeup.nz/opencollective-prod/token`
 - Use `--staging` flag or `OC_SECRET_REF` environment variable to select environment
@@ -201,6 +220,7 @@ To move from development/testing to production, we need to address:
 ### 1. Create Service Account
 
 Create a dedicated OpenCollective account for OpsDev.nz automation:
+
 - Account name: `opsdevnz-automation` or similar
 - Email: `automation@opsdev.nz` or similar
 - Owned by: OpsDev.nz collective (not an individual)
@@ -210,12 +230,14 @@ Create a dedicated OpenCollective account for OpsDev.nz automation:
 Generate two Personal Tokens (staging and production):
 
 **Staging Token:**
+
 - Account: `opsdevnz-automation` (or test account on staging)
 - Scopes: `account`, `host` (minimum required for collective management)
 - Expiration: None (or 1 year with rotation reminder)
 - 1Password location: `op://startmeup.nz/opencollective-staging-automation/token`
 
 **Production Token:**
+
 - Account: `opsdevnz-automation`
 - Scopes: `account`, `host` (minimum required)
 - Expiration: 1 year (with rotation reminder 30 days before)
@@ -236,6 +258,7 @@ export OC_SECRET_REF="op://startmeup.nz/opencollective-prod-automation/token"
 ### 4. Create Operational Documentation
 
 Create a runbook for token management:
+
 - How to check token validity (`oc-opsdevnz whoami`)
 - How to rotate tokens
 - How to update 1Password
@@ -244,6 +267,7 @@ Create a runbook for token management:
 ### 5. Test and Validate
 
 Test the new tokens:
+
 - Verify staging token works with `oc-opsdevnz whoami --staging`
 - Verify production token works with `oc-opsdevnz whoami`
 - Verify CI/CD pipelines can resolve tokens from 1Password
