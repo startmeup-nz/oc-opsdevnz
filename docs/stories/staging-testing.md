@@ -6,7 +6,9 @@
 
 ---
 
-## As a delivery engineer, I want to test changes on the staging OpenCollective site so that I can verify configuration before applying to production
+## Story
+
+**As a delivery engineer, I want to test changes on the staging OpenCollective site so that I can verify configuration before applying to production.**
 
 ### Context
 
