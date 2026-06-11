@@ -13,9 +13,9 @@ rationale.
 
 | ID | Title | Status |
 |----|-------|--------|
-| — | — | — |
+| 001 | [Authentication Strategy](authentication.md) | Draft |
 
-*No design decisions recorded yet. Add them as the module evolves.*
+*Design decisions are recorded as the module evolves. The authentication design covers Personal Tokens vs OAuth, production readiness requirements, and implementation recommendations.*
 
 ## ADR Template
 

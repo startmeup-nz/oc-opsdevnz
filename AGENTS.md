@@ -62,12 +62,16 @@ uv run python -m pytest tests/test_operations.py -v
 - **0.2.x** — Current development, API may shift as module matures
 - **1.0.0** — Stable release, semantic versioning enforced
 
-## Current Focus
+## Finding Current Work
 
-- Backfill GitHub template (test.yml, publish.yml, sast.yml, dependabot.yml)
-- Match the `practice-template-opsdevnz` standard
-- Create spec and documentation (in progress — June 2026)
-- Dogfood: use this module to set up OpsDev.nz as an OpenCollective collective
+This is a GitHub repository. To understand what work is in progress or planned:
+
+1. **Check open issues:** `gh issue list` or visit the Issues tab
+2. **Check open PRs:** `gh pr list` or visit the Pull Requests tab
+3. **Review documentation:** Read `docs/` for specifications, design decisions, and user stories
+4. **Check milestones:** `gh api repos/{owner}/{repo}/milestones` for planned releases
+
+Work items are tracked via GitHub issues and pull requests, not in this file.
 
 ## GraphQL API Notes
 
@@ -80,4 +84,3 @@ uv run python -m pytest tests/test_operations.py -v
 
 - [OpenCollective GraphQL API docs](https://docs.opencollective.com/help/developers/api)
 - [op-opsdevnz](https://github.com/startmeup-nz/op-opsdevnz) — 1Password secret resolution
-- [Module template repo](https://github.com/startmeup-nz/practice-template-opsdevnz)

@@ -17,8 +17,13 @@ User stories capture how different personas interact with `oc-opsdevnz`.
 
 ## Stories
 
-*No stories recorded yet. Stories are written as they are discovered during
-development and dogfooding.*
+### opsdev (Delivery Engineer)
+
+- [**Staging Testing Workflow**](staging-testing.md) — As an opsdev engineer, I want to test changes on the staging OpenCollective site so that I can verify configuration before applying to production. *Status: Draft*
+
+---
+
+*Stories are written as they are discovered during development and dogfooding.*
 
 ### Story Template
 
@@ -26,10 +31,13 @@ development and dogfooding.*
 ### As a <persona>, I want to <goal> so that <reason>
 
 **Acceptance Criteria:**
+
 - [ ] Criterion 1
 - [ ] Criterion 2
 
-**Notes:** Additional context, edge cases, related issues.
+**Notes:**
+
+Additional context, edge cases, related issues.
 ```
 
 ## Related
