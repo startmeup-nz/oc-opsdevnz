@@ -12,8 +12,8 @@ User stories capture how different personas interact with `oc-opsdevnz`.
 | Persona | Role | Primary Use |
 |---------|------|-------------|
 | **opsdev** | Delivery engineer | Automating collective setup, CI/CD integration |
-| **smunz** | Director | Verifying collective configuration, one-off queries |
-| **finops** | Financial operations | Reconciling OpenCollective data with ledger |
+| **opsgov** | Director | Verifying collective configuration, one-off queries |
+| **opsfin** | Financial operations | Reconciling OpenCollective data with ledger |
 
 ## Stories
 

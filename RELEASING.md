@@ -1,67 +1,64 @@
 # Releasing `oc-opsdevnz`
 
-Publish to TestPyPI first, verify, then ship to PyPI.
+All releases are automated through GitHub Actions and [Trusted Publishing
+(OIDC)](https://docs.pypi.org/trusted-publishers/). No API tokens are stored
+or managed — pushing a version tag triggers the pipeline.
+
+## Conventions
+
+| What | Rule |
+|------|------|
+| Versioning | [Semantic Versioning](https://semver.org) |
+| Tag format | `v<version>` (e.g. `v0.2.5`) |
+| Branch | `main` only — tags must point at a commit on `main` |
+| Auth | Trusted Publishing (OIDC) — no API tokens |
 
 ## Prerequisites
 
-- Access to the `startmeup-nz` TestPyPI/PyPI tokens (stored in 1Password).
-- `twine` and `build` installed (`pip install -e .[dev]` in your venv).
-- Clean `main` and tests green.
+- `uv` installed
+- Clean `main` branch, CI green
+- PyPI Trusted Publisher configured on Test PyPI and PyPI
 
-## Workflow
+## Release Workflow
 
-1. **Guardrails**
+### 1. Prepare
 
-Default API target is **production**; use `--staging`/`--test` for staging.
+On a branch off `main`:
 
-2. **Version + changelog** 
+```bash
+# Bump version in pyproject.toml
+version = "0.3.0"
 
-Bump `project.version` in `pyproject.toml` and add a `CHANGELOG.md` entry.
+# Move changelog entries from [Unreleased] to [0.3.0]
+```
 
-3. **Tests**
+### 2. Merge and tag
 
-   ```
-   pytest
-   ```
+```bash
+git checkout main
+git pull origin main
+git tag -s v0.3.0 -m "v0.3.0"
+git push origin v0.3.0
+```
 
-4. **Build**
+### 3. Watch CI
 
-   ```
-   rm -rf dist/
-   python -m build
-   python -m twine check dist/*
-   ```
+Pushing the tag fires `.github/workflows/publish.yml`:
 
-5. **TestPyPI**
+| Job | What it does |
+|-----|-------------|
+| `test-pypi` | Builds wheel, publishes to Test PyPI, installs and runs `oc-opsdevnz version` |
+| `pypi` | Runs only if test-pypi passes, publishes to real PyPI |
 
-   ```
-   twine upload --repository testpypi dist/*
-   ```
+### 4. Verify
 
-   Smoke-test:
+```bash
+pip install oc-opsdevnz==0.3.0
+oc-opsdevnz version
+```
 
-   ```
-   pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple oc-opsdevnz==<new-version>
-   oc-opsdevnz version
-   ```
+## Dry-run releases
 
-6. **PyPI**
-
-   ```
-   python -m twine upload --repository pypi dist/*
-   ```
-
-   Smoke-test:
-   
-   ```
-   pip install oc-opsdevnz==<new-version>
-   oc-opsdevnz version
-   ```
-
-7. **Tag + push**
-
-   ```
-   # prefer prefixed tag
-   git tag -a oc-opsdevnz-v<new-version> -m "Release <new-version>"
-   git push origin main oc-opsdevnz-v<new-version>
-   ```
+To validate the pipeline without publishing to real PyPI, temporarily comment
+out the `pypi` job in `.github/workflows/publish.yml`, tag and push, then
+restore it after confirming Test PyPI succeeds.

@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Add specifcations and design docs
+
 ## 0.2.4
 - Fix `NameError` in test_operations.py — add missing `from pathlib import Path` import.
 - Add `[tool.ruff]`, `[tool.ruff.lint]`, and `[tool.pytest.ini_options]` to pyproject.toml.
