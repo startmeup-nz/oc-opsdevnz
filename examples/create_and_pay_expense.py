@@ -4,7 +4,8 @@ import os
 import sys
 
 from op_opsdevnz.onepassword import get_secret
-from oc_opsdevnz.oc_client import OpenCollectiveClient, PROD_URL
+
+from oc_opsdevnz.oc_client import PROD_URL, OpenCollectiveClient
 
 CREATE = """
 mutation CreateExpense($input: ExpenseCreateInput!) {
@@ -24,7 +25,10 @@ mutation Process($id: String!, $action: ExpenseProcessAction!) {
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: python examples/create_and_pay_expense.py <account-slug> <payee-slug>", file=sys.stderr)
+        print(
+            "Usage: python examples/create_and_pay_expense.py <account-slug> <payee-slug>",
+            file=sys.stderr,
+        )
         sys.exit(64)
 
     account_slug = sys.argv[1]

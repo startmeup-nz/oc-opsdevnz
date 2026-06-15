@@ -4,7 +4,9 @@ import os
 import sys
 
 from op_opsdevnz.onepassword import get_secret
-from oc_opsdevnz.oc_client import OpenCollectiveClient, PROD_URL
+
+from oc_opsdevnz.oc_client import PROD_URL, OpenCollectiveClient
+
 
 def main():
     if len(sys.argv) < 2:

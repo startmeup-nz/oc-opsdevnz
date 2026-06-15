@@ -69,6 +69,43 @@ def cmd_whoami(args) -> int:
     return 0
 
 
+def _has(item: dict, *keys: str) -> bool:
+    return any(item.get(k) for k in keys)
+
+
+def _validate_host_item(item: dict) -> None:
+    if _has(item, "parent_slug", "parentSlug"):
+        raise ValueError(
+            f"Host item '{item.get('slug')}' has parent_slug;"
+            " use 'oc-opsdevnz projects' for projects."
+        )
+    if _has(
+        item, "host_slug", "hostSlug", "apply_to_host", "applyToHost", "managed_by", "managedBy"
+    ):
+        raise ValueError(
+            f"Host item '{item.get('slug')}' has collective fields;"
+            " use 'oc-opsdevnz collectives' for collectives."
+        )
+
+
+def _validate_collective_item(item: dict) -> None:
+    if _has(item, "parent_slug", "parentSlug"):
+        raise ValueError(
+            f"Collective item '{item.get('slug')}' has parent_slug;"
+            " use 'oc-opsdevnz projects' for projects."
+        )
+    if _has(item, "legal_name", "legalName", "currency"):
+        raise ValueError(
+            f"Collective item '{item.get('slug')}' has host-only fields (legal_name/currency);"
+            " use 'oc-opsdevnz hosts' for hosts."
+        )
+
+
+def _validate_project_item(item: dict) -> None:
+    if not _has(item, "parent_slug", "parentSlug"):
+        raise ValueError(f"Project item '{item.get('slug')}' is missing parent_slug.")
+
+
 def cmd_hosts(args) -> int:
     path = Path(args.config or args.file)
     if not path.exists():
@@ -81,6 +118,7 @@ def cmd_hosts(args) -> int:
     for item in items:
         if args.only and item.get("slug") != args.only:
             continue
+        _validate_host_item(item)
         result = upsert_host(client, item)
         _print_result("host", result)
     return 0
@@ -98,6 +136,7 @@ def cmd_collectives(args) -> int:
     for item in items:
         if args.only and item.get("slug") != args.only:
             continue
+        _validate_collective_item(item)
         result = upsert_collective(client, item)
         _print_result("collective", result)
     return 0
@@ -115,6 +154,7 @@ def cmd_projects(args) -> int:
     for item in items:
         if args.only and item.get("slug") != args.only:
             continue
+        _validate_project_item(item)
         result = upsert_project(client, item)
         _print_result("project", result)
     return 0
