@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+## 0.2.5
 - feature: `hosts`, `collectives`, and `projects` CLI subcommands now validate that YAML items match the expected entity type (e.g., `projects` rejects items missing `parent_slug`; `hosts` rejects collective fields; `collectives` rejects host-only fields like `legal_name`/`currency`).
 - bau: Replace project-specific slugs in tests with generic `example-*` names so the test suite stays neutral.
 - docs: Add local mock development user story and update staging testing workflow to local-first/UAT.
