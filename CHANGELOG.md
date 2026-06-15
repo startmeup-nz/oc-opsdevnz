@@ -1,7 +1,11 @@
 # Changelog
 
 ## Unreleased
-- Add specifcations and design docs
+- feature: `hosts`, `collectives`, and `projects` CLI subcommands now validate that YAML items match the expected entity type (e.g., `projects` rejects items missing `parent_slug`; `hosts` rejects collective fields; `collectives` rejects host-only fields like `legal_name`/`currency`).
+- bau: Replace project-specific slugs in tests with generic `example-*` names so the test suite stays neutral.
+- docs: Add local mock development user story and update staging testing workflow to local-first/UAT.
+- bau: Fix import ordering and line length in existing `examples/*.py` scripts so ruff passes.
+- Add specifications and design docs
 
 ## 0.2.4
 - Fix `NameError` in test_operations.py — add missing `from pathlib import Path` import.

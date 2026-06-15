@@ -1,23 +1,26 @@
 # Staging Testing Workflow
 
 **Status:** Draft<br />
-**User:** Delivery engineer<br />
+**User:** Operations Development engineer<br />
 **Module:** oc-opsdevnz
 
 ---
 
 ## Story
 
-**As a delivery engineer, I want to test changes on the staging OpenCollective site so that I can verify configuration before applying to production.**
+**As an operations development engineer, I want to test changes on the staging OpenCollective site so that I can verify configuration before applying to production.**
 
 ### Context
 
-OpsDev.nz is launching as an OpenCollective collective. We need to manage collective configuration (hosts, collectives, projects) via YAML files and the `oc-opsdevnz` CLI. Before applying changes to production, we need to verify them against the staging environment.
+OpsDev.nz is launching as an OpenCollective collective. We need to manage collective configuration (hosts, collectives, projects) via YAML files and the `oc-opsdevnz` CLI. Before applying changes to production, we verify them against the staging environment.
 
-This is the dogfooding workflow: use oc-opsdevnz to manage the OpsDev.nz collective itself, starting on staging.
+Staging is treated as user-acceptance testing (UAT): changes are first exercised
+against a local mock, then promoted to staging for final validation, and only
+lastly applied to production.
 
 ### Acceptance Criteria
 
+- [ ] `oc-opsdevnz` commands run successfully against a local mock API first
 - [ ] 1Password CLI authenticated on dev environment
 - [ ] Staging OC token accessible via `op` (using `OC_SECRET_REF`) or set directly (`OC_TOKEN`)
 - [ ] `oc-opsdevnz whoami opsdevnz --staging` returns valid account data
@@ -28,7 +31,16 @@ This is the dogfooding workflow: use oc-opsdevnz to manage the OpsDev.nz collect
 
 ### Workflow
 
-1. **Authenticate:**
+1.) **Validate locally with a mock API:**
+   OpsDev.nz maintains a SMUNZ-specific mock server and config for this purpose:
+   ```bash
+   # From the opsdev.nz repo
+   opencollective/mock/run-mock.sh
+   ```
+   See [Local Mock Development](local-mocking.md) for the full local-first
+   workflow.
+
+2.) **Authenticate for staging:**
    ```bash
    # Option A: Service account token (for automation)
    export OP_SERVICE_ACCOUNT_TOKEN="..."
@@ -38,7 +50,7 @@ This is the dogfooding workflow: use oc-opsdevnz to manage the OpsDev.nz collect
    eval $(op signin)
    ```
 
-2. **Set OC token reference:**
+3.) **Set OC token reference:**
    ```bash
    # Option A: Fetch from 1Password at runtime (preferred for automation)
    export OC_SECRET_REF="op://<vault>/<item>/credential"
@@ -47,12 +59,12 @@ This is the dogfooding workflow: use oc-opsdevnz to manage the OpsDev.nz collect
    export OC_TOKEN="<staging-oc-token>"
    ```
 
-3. **Test whoami:**
+4.) **Test whoami:**
    ```bash
    oc-opsdevnz whoami opsdevnz --staging
    ```
 
-4. **Apply YAML configuration:**
+5.) **Apply YAML configuration:**
    ```bash
    # Create/update host (StartMeUp.NZ on staging)
    oc-opsdevnz hosts --file staging-hosts.yaml --staging
@@ -64,15 +76,17 @@ This is the dogfooding workflow: use oc-opsdevnz to manage the OpsDev.nz collect
    oc-opsdevnz projects --file staging-projects.yaml --staging
    ```
 
-5. **Verify in web UI:**
-   - Log in to https://staging.opencollective.com with your staging account
-   - Check that the collective and projects appear correctly
-   - Verify tags, descriptions, host application
+6.) **Verify in web UI:**
 
-6. **Migrate to production:**
-   - Update YAML files to use production values
-   - Run commands without `--staging` flag (prod is default)
-   - Verify on https://opencollective.com
+- Log in to https://staging.opencollective.com with your staging account
+- Check that the collective and projects appear correctly
+- Verify tags, descriptions, host application
+
+7.) **Migrate to production:**
+
+- Update YAML files to use production values
+- Run commands without `--staging` flag (prod is default)
+- Verify on https://opencollective.com
 
 ### Notes
 
@@ -84,6 +98,8 @@ This is the dogfooding workflow: use oc-opsdevnz to manage the OpsDev.nz collect
 
 ### Edge Cases
 
+- What if the local mock response shape differs from the real API? Keep the mock
+  aligned with the queries in `oc_opsdevnz/operations.py`.
 - What if the staging token expires? How do we refresh it?
 - What if the collective already exists on staging? (Upsert should handle this)
 - What if the host application is rejected on staging? How do we retry?
@@ -92,3 +108,4 @@ This is the dogfooding workflow: use oc-opsdevnz to manage the OpsDev.nz collect
 ### Related
 
 - [Functional Requirements](../specs/functional-requirements.md)
+- [Local Mock Development](local-mocking.md)

@@ -86,6 +86,7 @@ for coll in load_items(Path("collectives.yaml")):
 - **[Specifications](specs/)** — Functional and non-functional requirements
 - **[Design Decisions](design/README.md)** — Architecture choices and rationale
 - **[User Stories](stories/README.md)** — Persona-driven narratives
+- **[Local Mock Development](stories/local-mocking.md)** — Develop and test without hitting OpenCollective's shared environments
 - **[Related Tools](related-tools.md)** — Similar tools, alternatives, and references
 
 ## Development

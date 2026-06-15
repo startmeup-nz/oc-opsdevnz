@@ -22,14 +22,14 @@ def test_upsert_host_creates_and_updates():
                 "data": {
                     "editAccount": {
                         "id": "org1",
-                        "slug": "startmeupnz",
-                        "name": "StartMeUp.NZ",
+                        "slug": "example-org",
+                        "name": "Example Org",
                         "description": "Platform team",
                         "currency": "NZD",
                         "longDescription": long_desc,
                         "tags": ["ops"],
-                        "website": "https://startmeup.nz/",
-                        "socialLinks": [{"type": "WEBSITE", "url": "https://startmeup.nz/"}],
+                        "website": "https://example.org/",
+                        "socialLinks": [{"type": "WEBSITE", "url": "https://example.org/"}],
                     }
                 }
             },
@@ -43,8 +43,8 @@ def test_upsert_host_creates_and_updates():
                 "data": {
                     "createOrganization": {
                         "id": "org1",
-                        "slug": "startmeupnz",
-                        "name": "StartMeUp.NZ",
+                        "slug": "example-org",
+                        "name": "Example Org",
                         "type": "ORGANIZATION",
                     }
                 }
@@ -58,11 +58,11 @@ def test_upsert_host_creates_and_updates():
     result = upsert_host(
         client,
         {
-            "name": "StartMeUp.NZ",
-            "slug": "startmeupnz",
+            "name": "Example Org",
+            "slug": "example-org",
             "description": "Platform team",
             "long_description": long_desc,
-            "website": "https://startmeup.nz",
+            "website": "https://example.org",
             "tags": ["ops"],
             "currency": "NZD",
         },
@@ -71,7 +71,7 @@ def test_upsert_host_creates_and_updates():
     assert result.created is True
     assert result.updated is True
     assert result.warnings == []
-    assert result.account["slug"] == "startmeupnz"
+    assert result.account["slug"] == "example-org"
     client.close()
 
 
@@ -86,16 +86,16 @@ def test_upsert_host_no_update_when_same():
                         "account": {
                             "__typename": "Organization",
                             "id": "org1",
-                            "slug": "startmeupnz",
-                            "name": "StartMeUp.NZ",
+                            "slug": "example-org",
+                            "name": "Example Org",
                             "type": "ORGANIZATION",
                             "isHost": True,
                             "description": "Platform team",
                             "longDescription": "Long copy",
                             "currency": "NZD",
                             "tags": ["ops"],
-                            "website": "https://startmeup.nz/",
-                            "socialLinks": [{"type": "WEBSITE", "url": "https://startmeup.nz/"}],
+                            "website": "https://example.org/",
+                            "socialLinks": [{"type": "WEBSITE", "url": "https://example.org/"}],
                             "stats": {"balance": {"currency": "NZD"}},
                         }
                     }
@@ -108,11 +108,11 @@ def test_upsert_host_no_update_when_same():
     result = upsert_host(
         client,
         {
-            "name": "StartMeUp.NZ",
-            "slug": "startmeupnz",
+            "name": "Example Org",
+            "slug": "example-org",
             "description": "Platform team",
             "long_description": "Long copy",
-            "website": "https://startmeup.nz",
+            "website": "https://example.org",
             "tags": ["ops"],
             "currency": "NZD",
         },
@@ -121,7 +121,7 @@ def test_upsert_host_no_update_when_same():
     assert result.created is False
     assert result.updated is False
     assert result.warnings == []
-    assert result.account["slug"] == "startmeupnz"
+    assert result.account["slug"] == "example-org"
     client.close()
 
 
@@ -134,8 +134,8 @@ def test_collective_create_and_apply_to_host():
                 "data": {
                     "account": {
                         "id": "host1",
-                        "slug": "opsdevnz-host",
-                        "name": "OpsDev Host",
+                        "slug": "example-host",
+                        "name": "Example Host",
                         "type": "ORGANIZATION",
                         "isHost": True,
                     }
@@ -149,8 +149,8 @@ def test_collective_create_and_apply_to_host():
                 "data": {
                     "createCollective": {
                         "id": "col1",
-                        "slug": "opsdevnz",
-                        "name": "OpsDev",
+                        "slug": "example-collective",
+                        "name": "Example Collective",
                         "type": "COLLECTIVE",
                     }
                 }
@@ -162,9 +162,9 @@ def test_collective_create_and_apply_to_host():
                 "data": {
                     "editAccount": {
                         "id": "col1",
-                        "slug": "opsdevnz",
-                        "name": "OpsDev",
-                        "description": "OpsDev collective",
+                        "slug": "example-collective",
+                        "name": "Example Collective",
+                        "description": "Example collective",
                         "tags": ["ops"],
                         "host": None,
                     }
@@ -177,8 +177,8 @@ def test_collective_create_and_apply_to_host():
                 "data": {
                     "applyToHost": {
                         "id": "col1",
-                        "slug": "opsdevnz",
-                        "host": {"slug": "opsdevnz-host", "name": "OpsDev Host"},
+                        "slug": "example-collective",
+                        "host": {"slug": "example-host", "name": "Example Host"},
                     }
                 }
             },
@@ -190,11 +190,11 @@ def test_collective_create_and_apply_to_host():
     result = upsert_collective(
         client,
         {
-            "name": "OpsDev",
-            "slug": "opsdevnz",
-            "description": "OpsDev collective",
+            "name": "Example Collective",
+            "slug": "example-collective",
+            "description": "Example collective",
             "tags": ["ops"],
-            "host_slug": "opsdevnz-host",
+            "host_slug": "example-host",
             "apply_to_host": True,
             "host_apply_message": "Please host us for staging.",
         },
@@ -203,7 +203,7 @@ def test_collective_create_and_apply_to_host():
     assert result.created is True
     assert result.updated is True
     assert result.applied_to_host is True
-    assert result.account.get("host", {}).get("slug") == "opsdevnz-host"
+    assert result.account.get("host", {}).get("slug") == "example-host"
     client.close()
 
 
@@ -216,8 +216,8 @@ def test_project_create_and_update():
                 "data": {
                     "account": {
                         "id": "col-parent",
-                        "slug": "opsdevnz",
-                        "name": "OpsDev",
+                        "slug": "example-collective",
+                        "name": "Example Collective",
                         "type": "COLLECTIVE",
                     }
                 }
@@ -230,10 +230,10 @@ def test_project_create_and_update():
                 "data": {
                     "createProject": {
                         "id": "proj1",
-                        "slug": "getjjobs-nz",
-                        "name": "GetJJobs",
+                        "slug": "example-project",
+                        "name": "Example Project",
                         "type": "PROJECT",
-                        "parent": {"slug": "opsdevnz"},
+                        "parent": {"slug": "example-collective"},
                     }
                 }
             },
@@ -244,9 +244,9 @@ def test_project_create_and_update():
                 "data": {
                     "editAccount": {
                         "id": "proj1",
-                        "slug": "getjjobs-nz",
-                        "name": "GetJJobs",
-                        "description": "Jobs project",
+                        "slug": "example-project",
+                        "name": "Example Project",
+                        "description": "Example project",
                         "tags": ["jobs"],
                     }
                 }
@@ -259,17 +259,17 @@ def test_project_create_and_update():
     result = upsert_project(
         client,
         {
-            "name": "GetJJobs",
-            "slug": "getjjobs-nz",
-            "parent_slug": "opsdevnz",
-            "description": "Jobs project",
+            "name": "Example Project",
+            "slug": "example-project",
+            "parent_slug": "example-collective",
+            "description": "Example project",
             "tags": ["jobs"],
         },
     )
 
     assert result.created is True
     assert result.updated is True
-    assert result.account["slug"] == "getjjobs-nz"
+    assert result.account["slug"] == "example-project"
     client.close()
 
 

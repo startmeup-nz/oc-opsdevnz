@@ -19,6 +19,7 @@ User stories capture how different personas interact with `oc-opsdevnz`.
 
 ### opsdev (Delivery Engineer)
 
+- [**Local Mock Development**](local-mocking.md) — As an Operations Development engineer, I want to develop and test `oc-opsdevnz` against a local mock OpenCollective API so that I can iterate without touching the official staging or production environments. *Status: Draft*
 - [**Staging Testing Workflow**](staging-testing.md) — As an opsdev engineer, I want to test changes on the staging OpenCollective site so that I can verify configuration before applying to production. *Status: Draft*
 
 ---

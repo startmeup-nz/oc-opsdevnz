@@ -7,7 +7,7 @@ token from OC_SECRET_REF/OC_TOKEN.
 
 import json
 import sys
-from typing import Dict, Any
+from typing import Any, Dict
 
 from oc_opsdevnz import OpenCollectiveClient
 
