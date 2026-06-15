@@ -23,7 +23,7 @@ jobs:
 
       - name: Build package
         run: |
-          uv sync
+          uv sync --extra dev
           uv run python -m build
 
       - name: Publish to Test PyPI
@@ -59,7 +59,7 @@ jobs:
 
       - name: Build package
         run: |
-          uv sync
+          uv sync --extra dev
           uv run python -m build
 
       - name: Publish to PyPI
