@@ -30,7 +30,7 @@ MCP layer on top of oc-opsdevnz, or as a replacement if it covers our needs.
 ## OpenCollective GraphQL API
 
 - **Docs:** `docs.opencollective.com/help/developers/api`
-- **Playground:** `staging-api.opencollective.com/graphql/v2`
+- **Playground:** `api-staging.opencollective.com/graphql/v2`
 
 The API we wrap. Provides full programmatic access to accounts, collectives,
 expenses, transactions, orders, and host management. oc-opsdevnz uses a subset

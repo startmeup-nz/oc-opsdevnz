@@ -71,7 +71,7 @@ The module MUST enforce safe defaults and explicit opt-in for non-production env
 ### FR-3.2: Staging Opt-In
 
 - **FR-3.2.1**: `OpenCollectiveClient.for_staging()` MUST target the staging API
-  (`https://staging-api.opencollective.com/graphql/v2`)
+  (`https://api-staging.opencollective.com/graphql/v2`)
 - **FR-3.2.2**: CLI MUST accept `--staging` and `--test` (alias) flags to target staging
 - **FR-3.2.3**: CLI MUST accept `--prod` for explicitness, though production is the default
 

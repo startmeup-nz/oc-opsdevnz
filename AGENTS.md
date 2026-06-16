@@ -76,7 +76,7 @@ Work items are tracked via GitHub issues and pull requests, not in this file.
 ## GraphQL API Notes
 
 - Production endpoint: `https://api.opencollective.com/graphql/v2`
-- Staging endpoint: `https://staging-api.opencollective.com/graphql/v2`
+- Staging endpoint: `https://api-staging.opencollective.com/graphql/v2`
 - Staging requires a separate account and API token
 - The staging fiscal host is `startmeupnztest2`; production is TBD
 
