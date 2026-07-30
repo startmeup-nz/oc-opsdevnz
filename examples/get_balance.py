@@ -22,7 +22,9 @@ def main():
     query GetAccount($slug: String!) {
       account(slug: $slug) {
         id slug name type isHost
-        host { id slug name }
+        ... on AccountWithHost {
+          host { id slug name }
+        }
         stats { balance { valueInCents currency } }
       }
     }
