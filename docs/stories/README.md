@@ -20,7 +20,11 @@ User stories capture how different personas interact with `oc-opsdevnz`.
 ### opsdev (Delivery Engineer)
 
 - [**Local Mock Development**](local-mocking.md) — As an Operations Development engineer, I want to develop and test `oc-opsdevnz` against a local mock OpenCollective API so that I can iterate without touching the official staging or production environments. *Status: Draft*
-- [**Staging Testing Workflow**](staging-testing.md) — As an opsdev engineer, I want to test changes on the staging OpenCollective site so that I can verify configuration before applying to production. *Status: Draft*
+- [**Staging Testing Workflow**](staging-testing.md) — As an opsdev engineer, I want to test changes on the staging OpenCollective site so that I can verify configuration before applying to production. *Status: Draft — validation results appended 2026-07-27*
+
+### opsfin (Financial Operations)
+
+- [**Financial Operations: addFunds & createExpense**](financial-operations.md) — As a financial operator, I want to seed host balances, allocate funds to projects, and create expenses via the CLI. *Status: Draft — staging-validated, P0, implementation pending*
 
 ---
 

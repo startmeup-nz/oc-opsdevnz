@@ -105,7 +105,43 @@ lastly applied to production.
 - What if the host application is rejected on staging? How do we retry?
 - What if we need to delete something on staging? (Not currently supported by CLI)
 
+## Staging Validation Results (2026-07-27)
+
+A full bootstrap was validated against the OC staging API. Four throwaway
+scripts exercised the core financial operations: preflight cleanup, host
+seeding, project allocation, and expense creation. All 8 open questions were
+answered.
+
+### Answered Questions
+
+| # | Question | Answer |
+|---|----------|--------|
+| 1 | How to seed a host with an opening balance? | Self-referencing `addFunds` (host → host). Zero host fee. Works. |
+| 2 | What payee slug types does `createExpense` accept? | Any account slug. Tested with project and self-referencing slugs. |
+| 3 | Does `ACCOUNT_BALANCE` trigger an actual payout? | Record-only. No real money movement. Expense stays PENDING. |
+| 4 | What expense statuses are publicly visible? | APPROVED and PAID are visible. DRAFT and PENDING are not. |
+| 5 | Does `addFunds` accept `processedAt` backdating? | Yes. ISO 8601 datetimes in UTC accepted. |
+| 6 | Should manual ledger earmarks be removed after OC seeding? | No. Posted governance events stay. OC import must be idempotent. |
+| 7 | Can legacy test transactions be reversed? | Yes. `editAddedFunds` works. OC requires `amount > 0` — $0.01 is the practical minimum. |
+| 8 | Do project accounts exist on production? | Confirmed via API query. |
+
+### Additional Discoveries
+
+- **`INVOICE` preferred over `RECEIPT`:** `RECEIPT` requires per-item file
+  URLs — unnecessary friction for internal expense tracking.
+- **Pre-allocation mandatory:** OC requires project balance > 0 before paying
+  expenses. `addFunds` must precede `createExpense`.
+- **Slug corrections from staging:** OC slugs differ from human-readable
+  names (e.g., `opsdevnz` not `opsdev-nz`, `software-freedom-day-2026` not
+  `software-freedom-day-wellington-2026`). Always verify slugs via
+  `oc-opsdevnz whoami` or the GraphQL explorer before scripting.
+- **Balance with pending:** Use `stats.balanceWithPending` to see the
+  balance including pending expenses. Useful for reconciliation checks.
+- **Decimal arithmetic:** Dollar→cents conversion must use `Decimal`, never
+  `float`. See [Financial Operations](financial-operations.md).
+
 ### Related
 
+- [Financial Operations](financial-operations.md) — addFunds and createExpense spec
 - [Functional Requirements](../specs/functional-requirements.md)
 - [Local Mock Development](local-mocking.md)
