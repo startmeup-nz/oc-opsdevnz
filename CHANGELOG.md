@@ -2,7 +2,13 @@
 
 ## Unreleased
 
-- Fix staging API link in documentation.
+- docs: Add `addFunds` & `createExpense` financial operations user story with staging-validated patterns, acceptance criteria, and Decimal arithmetic requirement.
+- docs: Document staging validation results (8 answered questions, 5 additional discoveries) in the staging testing workflow.
+- docs: Add reconciliation queries user story for `expenses` and `transactions` subcommands (design complete, staging validation pending).
+- docs: Extend listing-and-inspection design doc with transaction/expense GraphQL query designs and reconciliation pipeline overview.
+- examples: Add `seed_host_and_allocate.py` demonstrating self-referencing host seed and host-to-project allocation via `addFunds`.
+- examples: Fix `get_balance.py` host query to use `... on AccountWithHost` fragment so it doesn't fail on non-hosted accounts.
+- docs: Fix staging API link in documentation.
 
 ## 0.2.5
 - feature: `hosts`, `collectives`, and `projects` CLI subcommands now validate that YAML items match the expected entity type (e.g., `projects` rejects items missing `parent_slug`; `hosts` rejects collective fields; `collectives` rejects host-only fields like `legal_name`/`currency`).
