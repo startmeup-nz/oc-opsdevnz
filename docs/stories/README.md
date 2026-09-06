@@ -25,6 +25,7 @@ User stories capture how different personas interact with `oc-opsdevnz`.
 ### opsfin (Financial Operations)
 
 - [**Financial Operations: addFunds & createExpense**](financial-operations.md) — As a financial operator, I want to seed host balances, allocate funds to projects, and create expenses via the CLI. *Status: Draft — staging-validated, P0, implementation pending*
+- [**Reconciliation Queries: expenses & transactions**](reconciliation-queries.md) — As a financial operator, I want to list expenses and transactions from OC via the CLI so I can identify their IDs and reconcile them against Beancount. *Status: Draft — design complete, staging validation pending, P0*
 
 ---
 

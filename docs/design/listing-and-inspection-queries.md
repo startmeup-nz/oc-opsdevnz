@@ -1,7 +1,7 @@
 # Listing and Inspection Queries for oc-opsdevnz
 
 **Status:** Discovery — not yet implemented<br />
-**Created:** 2026-06-12<br />
+**Created:** 2026-08-11<br />
 **Author:** opsdev
 
 ---
@@ -198,6 +198,134 @@ This gives a complete picture of what exists vs what the YAML specifies.
 
 ---
 
+---
+
+## Transaction and Expense Queries (for reconciliation)
+
+These queries support the reconciliation workflow: listing financial
+transactions and expenses from OpenCollective so they can be matched against
+Beancount entries.
+
+### 5. List expenses for an account
+
+```graphql
+query Expenses($slug: String!, $limit: Int!, $offset: Int!) {
+  expenses(account: { slug: $slug }, limit: $limit, offset: $offset) {
+    nodes {
+      id legacyId status type description
+      amountV2 { valueInCents currency }
+      payee { slug name }
+      createdAt
+    }
+    totalCount
+  }
+}
+```
+
+This is the **primary reconciliation query** for the OC → Beancount matching
+workflow. Each expense node includes:
+- `legacyId` — the numeric ID visible in the OC web UI, used as the
+  `oc_expense_id` in Beancount metadata
+- `status` — `PENDING`, `APPROVED`, `PAID`, `REJECTED`, `CANCELED`, `DRAFT`;
+  not server-filterable via a plain list (see schema notes below), so filter
+  client-side
+- `payee.slug` — the account receiving the expense, useful for matching
+  against Beancount payee entries
+
+**Schema notes (verified against the deployed API, 2026-09):**
+
+- `amount` on expenses is now a plain Int (cents), with `currency` as a
+  sibling field. The object form lives on `amountV2 { valueInCents currency }`.
+  Selecting `amount { valueInCents currency }` fails with HTTP 400.
+- The server-side `status` argument no longer accepts `[ExpenseStatus!]`; the
+  server expects an `ExpenseStatusFilter` input whose shape is unconfirmed.
+  Filter client-side until that shape is validated.
+- Server-side date filtering works: `expenses(dateFrom: $from, ...)` returns
+  only expenses created on or after the given DateTime. A host-wide sweep is
+  also verified: `expenses(host: $host, hostContext: ALL, dateFrom: $from)`
+  returns every hosted account's expenses in one query, which is how the
+  monthly reconciliation survey reads the fiscal host.
+
+The existing `examples/list_expenses.py` demonstrates this query with
+client-side status filtering (limit 100, filter in Python).
+
+### 6. List transactions for an account
+
+```graphql
+query Transactions($slug: String!, $limit: Int!, $offset: Int!, $kind: TransactionKind) {
+  account(slug: $slug) {
+    transactions(limit: $limit, offset: $offset, kind: $kind) {
+      nodes {
+        id legacyId kind type description
+        amount { valueInCents currency }
+        fromAccount { slug name }
+        toAccount { slug name }
+        createdAt
+        order { id legacyId status }
+        expense { id legacyId status }
+      }
+      totalCount
+    }
+  }
+}
+```
+
+Query #6 is unverified against the deployed API. The expenses findings above
+(plain-Int `amount`, `ExpenseStatusFilter`) suggest similar drift may apply to
+`Transaction`, so validate on staging before implementing. For reference,
+`orders` still accepts the object form (`amount { valueInCents currency }`
+verified 2026-09), so `Transaction` may too.
+
+Transactions are the broader financial record — they include `ADDED_FUNDS`,
+`CONTRIBUTION`, `EXPENSE` entries and more. Key fields for reconciliation:
+
+| Field | Use |
+|-------|-----|
+| `legacyId` | Maps to `oc_transaction_id` in Beancount metadata |
+| `kind` | `ADDED_FUNDS`, `CONTRIBUTION`, `EXPENSE`, `PLATFORM_TIP`, etc. |
+| `order.legacyId` | Links back to the originating contribution/order |
+| `expense.legacyId` | Links back to the originating expense |
+| `fromAccount.slug` / `toAccount.slug` | Source and destination of the entry |
+
+### Reconciliation pipeline design
+
+The target CLI subcommands:
+
+```
+oc-opsdevnz expenses <slug>   --staging   --status PAID,APPROVED   --since 2026-08-01   --json
+oc-opsdevnz transactions <slug> --staging --kind ADDED_FUNDS      --since 2026-08-01   --json
+```
+
+The `--json` flag outputs machine-readable JSON for piping into reconciliation
+tooling (e.g., a Beancount matcher script). Without `--json`, output is a
+human-readable table.
+
+The reconciliation match key is the `legacyId` — it's the numeric ID visible
+in the OC UI and unambiguous. Beancount metadata uses:
+- `oc_transaction_id` for transactions (Add Funds, contributions)
+- `oc_expense_id` for expenses
+
+A future reconciliation script would:
+1. Fetch expenses from OC via `oc-opsdevnz expenses --json`
+2. Parse `beancount/ledger.beancount` for entries with `oc_expense_id` metadata
+3. Match and report: which OC expenses have no Beancount entry, which Beancount
+   entries reference missing OC expenses
+
+### Implementation priority
+
+| Priority | Command | What It Does |
+|----------|---------|--------------|
+| P0 | `oc-opsdevnz expenses <slug> --staging` | List expenses with status, payee, amounts |
+| P1 | `oc-opsdevnz transactions <slug> --staging` | List transactions with kind, from/to accounts |
+| P2 | Reconciliation matching script | Cross-reference OC expense IDs ↔ Beancount metadata |
+
+The `expenses` subcommand is P0 because expenses are the primary reconciliation
+target — every Beancount expense should link to an OC expense. Transactions
+(Add Funds, contributions) are P1 because they're less frequent and already
+partially handled by the `addFunds` workflow.
+
+---
+
 ## Open Questions
 
 1. **Does `hostedAccounts` require authentication on staging?** Some GraphQL fields
@@ -213,3 +341,17 @@ This gives a complete picture of what exists vs what the YAML specifies.
 4. **Ecosyste.ms as a caching layer.** For large-scale listing (e.g., "find all NZ
    collectives"), the Ecosyste.ms API is better suited than querying OC GraphQL
    one slug at a time. Could be used as a discovery tool alongside `show`.
+
+5. **`TransactionKind` enum values.** The OC GraphQL schema defines `TransactionKind`
+   — staging validation should confirm which values are available and
+   filterable. Expected: `ADDED_FUNDS`, `CONTRIBUTION`, `EXPENSE`,
+   `PLATFORM_TIP`, `HOST_FEE`, `HOST_FEE_SHARE`, `PAYMENT_PROCESSOR_FEE`.
+
+6. **Time-range filtering.** `dateFrom` on `expenses` is verified working
+   (2026-09). Still to confirm: `dateTo` on `expenses`, and both arguments on
+   `transactions`, for monthly reconciliation windows.
+
+7. **`ExpenseStatusFilter` input shape.** Server-side status filtering for
+   expenses now expects this input instead of `[ExpenseStatus!]`, but its
+   shape is unconfirmed. Until validated, filter client-side as
+   `examples/list_expenses.py` does.
