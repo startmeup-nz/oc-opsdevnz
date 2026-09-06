@@ -5,7 +5,9 @@
 - docs: Add `addFunds` & `createExpense` financial operations user story with staging-validated patterns, acceptance criteria, and Decimal arithmetic requirement.
 - docs: Document staging validation results (8 answered questions, 5 additional discoveries) in the staging testing workflow.
 - docs: Add reconciliation queries user story for `expenses` and `transactions` subcommands (design complete, staging validation pending).
+- docs: Update reconciliation query designs to the deployed OC GraphQL schema: `amount` is a plain Int with the object form on `amountV2`, server-side `status` list filtering removed (client-side filtering), `dateFrom` and host-wide `hostContext: ALL` sweeps verified.
 - docs: Extend listing-and-inspection design doc with transaction/expense GraphQL query designs and reconciliation pipeline overview.
+- examples: Fix `list_expenses.py` for the current OC GraphQL schema — drop the rejected server-side `status` list argument (filter client-side) and select `amount`/`currency` instead of `amount { valueInCents currency }`.
 - examples: Add `seed_host_and_allocate.py` demonstrating self-referencing host seed and host-to-project allocation via `addFunds`.
 - examples: Fix `get_balance.py` host query to use `... on AccountWithHost` fragment so it doesn't fail on non-hosted accounts.
 - docs: Fix staging API link in documentation.

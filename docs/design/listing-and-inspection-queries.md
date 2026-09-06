@@ -209,11 +209,11 @@ Beancount entries.
 ### 5. List expenses for an account
 
 ```graphql
-query Expenses($slug: String!, $limit: Int!, $offset: Int!, $status: [ExpenseStatus!]) {
-  expenses(account: { slug: $slug }, limit: $limit, offset: $offset, status: $status) {
+query Expenses($slug: String!, $limit: Int!, $offset: Int!) {
+  expenses(account: { slug: $slug }, limit: $limit, offset: $offset) {
     nodes {
       id legacyId status type description
-      amount { valueInCents currency }
+      amountV2 { valueInCents currency }
       payee { slug name }
       createdAt
     }
@@ -226,11 +226,28 @@ This is the **primary reconciliation query** for the OC → Beancount matching
 workflow. Each expense node includes:
 - `legacyId` — the numeric ID visible in the OC web UI, used as the
   `oc_expense_id` in Beancount metadata
-- `status` — filterable: `PENDING`, `APPROVED`, `PAID`, `REJECTED`, `CANCELED`, `DRAFT`
+- `status` — `PENDING`, `APPROVED`, `PAID`, `REJECTED`, `CANCELED`, `DRAFT`;
+  not server-filterable via a plain list (see schema notes below), so filter
+  client-side
 - `payee.slug` — the account receiving the expense, useful for matching
   against Beancount payee entries
 
-The existing `examples/list_expenses.py` already demonstrates this query.
+**Schema notes (verified against the deployed API, 2026-09):**
+
+- `amount` on expenses is now a plain Int (cents), with `currency` as a
+  sibling field. The object form lives on `amountV2 { valueInCents currency }`.
+  Selecting `amount { valueInCents currency }` fails with HTTP 400.
+- The server-side `status` argument no longer accepts `[ExpenseStatus!]`; the
+  server expects an `ExpenseStatusFilter` input whose shape is unconfirmed.
+  Filter client-side until that shape is validated.
+- Server-side date filtering works: `expenses(dateFrom: $from, ...)` returns
+  only expenses created on or after the given DateTime. A host-wide sweep is
+  also verified: `expenses(host: $host, hostContext: ALL, dateFrom: $from)`
+  returns every hosted account's expenses in one query, which is how the
+  monthly reconciliation survey reads the fiscal host.
+
+The existing `examples/list_expenses.py` demonstrates this query with
+client-side status filtering (limit 100, filter in Python).
 
 ### 6. List transactions for an account
 
@@ -252,6 +269,12 @@ query Transactions($slug: String!, $limit: Int!, $offset: Int!, $kind: Transacti
   }
 }
 ```
+
+Query #6 is unverified against the deployed API. The expenses findings above
+(plain-Int `amount`, `ExpenseStatusFilter`) suggest similar drift may apply to
+`Transaction`, so validate on staging before implementing. For reference,
+`orders` still accepts the object form (`amount { valueInCents currency }`
+verified 2026-09), so `Transaction` may too.
 
 Transactions are the broader financial record — they include `ADDED_FUNDS`,
 `CONTRIBUTION`, `EXPENSE` entries and more. Key fields for reconciliation:
@@ -324,6 +347,11 @@ partially handled by the `addFunds` workflow.
    filterable. Expected: `ADDED_FUNDS`, `CONTRIBUTION`, `EXPENSE`,
    `PLATFORM_TIP`, `HOST_FEE`, `HOST_FEE_SHARE`, `PAYMENT_PROCESSOR_FEE`.
 
-6. **Time-range filtering.** The `transactions` and `expenses` endpoints both
-   accept `dateFrom` and `dateTo` arguments. Staging validation should confirm
-   these work as expected for monthly reconciliation windows.
+6. **Time-range filtering.** `dateFrom` on `expenses` is verified working
+   (2026-09). Still to confirm: `dateTo` on `expenses`, and both arguments on
+   `transactions`, for monthly reconciliation windows.
+
+7. **`ExpenseStatusFilter` input shape.** Server-side status filtering for
+   expenses now expects this input instead of `[ExpenseStatus!]`, but its
+   shape is unconfirmed. Until validated, filter client-side as
+   `examples/list_expenses.py` does.

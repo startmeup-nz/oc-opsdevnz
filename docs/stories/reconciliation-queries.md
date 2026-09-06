@@ -1,6 +1,6 @@
 # Reconciliation Queries: expenses & transactions
 
-**Status:** Draft — design complete, staging validation pending<br />
+**Status:** Draft — query design verified against the deployed OC API (expenses, 2026-09); staging validation pending for the CLI implementation<br />
 **User:** opsfin (Financial Operations)<br />
 **Module:** oc-opsdevnz<br />
 **Priority:** P0 — prerequisite for automated OC ↔ Beancount reconciliation
@@ -13,8 +13,7 @@
 
 ### Context
 
-The monthly reconciliation runbook (see `ledger.startmeup.nz/docs/runbooks/oc-reconciliation.md`)
-has two parts:
+The monthly reconciliation runbook has two parts:
 
 1. **ANZ → Beancount** — automated via Akahu fetch + import
 2. **OC Alignment** — currently manual web UI
@@ -62,16 +61,28 @@ This story covers step 1: making the data available.
 
 ### Staging Validation Required
 
-Before implementing, validate these queries against staging:
+Reconciliation work in September 2026 already verified part of the schema
+against the deployed API:
+
+- `expenses(account/host, limit, offset)` works, and `legacyId` is the numeric
+  ID visible in the OC web UI
+- `amount` on expenses is a plain Int (cents); the object form is
+  `amountV2 { valueInCents currency }`
+- Server-side `status: [ExpenseStatus!]` is rejected (the server expects an
+  `ExpenseStatusFilter` input, shape unconfirmed); filter client-side
+- `dateFrom` filtering verified on `expenses`; a host-wide sweep via
+  `expenses(host: $host, hostContext: ALL, dateFrom: $from)` also works
+
+Still to validate against staging before implementing:
 
 | # | Query | What to Confirm |
 |---|-------|-----------------|
-| 1 | `expenses(account, limit, status)` | `legacyId` is the same as the numeric ID visible in the OC web UI |
-| 2 | `transactions(limit, offset, kind)` | `TransactionKind` enum values: which are filterable? |
-| 3 | Date range filtering | Do `dateFrom`/`dateTo` work as expected on both `expenses` and `transactions`? |
-| 4 | `order.legacyId` on transactions | Does it link back to the originating order? |
-| 5 | `expense.legacyId` on transactions | Does it link back to the originating expense? |
-| 6 | Pagination `totalCount` | Is it accurate? Does it reflect filtered results? |
+| 1 | `transactions(limit, offset, kind)` | `TransactionKind` enum values: which are filterable? |
+| 2 | Date range filtering | Do `dateTo` (expenses) and `dateFrom`/`dateTo` (transactions) work as `dateFrom` does on expenses? |
+| 3 | `order.legacyId` on transactions | Does it link back to the originating order? |
+| 4 | `expense.legacyId` on transactions | Does it link back to the originating expense? |
+| 5 | Pagination `totalCount` | Is it accurate? Does it reflect filtered results? |
+| 6 | `ExpenseStatusFilter` | Input shape for server-side status filtering (optional; client-side filtering works) |
 
 ### Output Examples
 
@@ -93,7 +104,7 @@ ID        Status  Amount      Payee            Description
 ```
 $ oc-opsdevnz expenses startmeup-nz --staging --status PAID --json
 [
-  {"id": "67", "legacyId": 67, "status": "PAID", "amount": {"valueInCents": 65550, "currency": "NZD"}, "payee": "sfd-2026", "description": "SFD 2026 allocation", "createdAt": "2026-07-27T..."},
+  {"id": "67", "legacyId": 67, "status": "PAID", "amount": 65550, "currency": "NZD", "payee": "sfd-2026", "description": "SFD 2026 allocation", "createdAt": "2026-07-27T..."},
   ...
 ]
 ```
@@ -138,4 +149,3 @@ should consider these parent links when matching.
 
 - [Listing and Inspection Queries](../design/listing-and-inspection-queries.md) — GraphQL query design
 - [Financial Operations](financial-operations.md) — addFunds and createExpense (the write side)
-- [OC Reconciliation Runbook](https://startmeup.nz) — monthly process
