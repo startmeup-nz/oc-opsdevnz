@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.2.6
 
+- bugfix: `from_secret_ref()` now honours the `OC_API_URL` environment variable (the documented override) instead of ignoring it, and the `op://` reference inference recognises `pat-staging...`/`pat-production...` vault item names. Previously a production reference was silently routed to the staging endpoint.
 - docs: Add `addFunds` & `createExpense` financial operations user story with staging-validated patterns, acceptance criteria, and Decimal arithmetic requirement.
 - docs: Document staging validation results (8 answered questions, 5 additional discoveries) in the staging testing workflow.
 - docs: Add reconciliation queries user story for `expenses` and `transactions` subcommands (design complete, staging validation pending).

@@ -15,11 +15,18 @@ STAGING_URL = "https://api-staging.opencollective.com/graphql/v2"
 
 
 def _infer_api_url_from_secret_ref(env_var: str = "OC_SECRET_REF") -> str:
-    """Peek at the op:// reference to pick staging vs prod automatically."""
+    """Peek at the op:// reference to pick staging vs prod automatically.
+
+    Recognises both naming schemes: endpoint-style item names
+    (``api-staging.opencollective.com`` / ``api.opencollective.com``) and
+    vault item names carrying the environment word (``pat-staging...`` /
+    ``pat-production...``). Defaults to staging when the reference matches
+    neither.
+    """
     ref = os.getenv(env_var, "")  # e.g. op://startmeup.nz/api-staging.opencollective.com/credential
-    if "api-staging.opencollective.com" in ref:
+    if "staging" in ref:
         return STAGING_URL
-    if "api.opencollective.com" in ref:
+    if "production" in ref or "api.opencollective.com" in ref:
         return PROD_URL
     return STAGING_URL  # default to staging
 
@@ -149,7 +156,10 @@ class OpenCollectiveClient:
         **kwargs,
     ):
         token = get_oc_token(secret_ref_env=secret_ref_env)
-        api_url = _infer_api_url_from_secret_ref(secret_ref_env)
+        # OC_API_URL is the documented override (see examples and docs): when
+        # set, it wins. The op:// reference is only the fallback signal for
+        # which environment the token belongs to.
+        api_url = os.getenv("OC_API_URL") or _infer_api_url_from_secret_ref(secret_ref_env)
         allow_prod = api_url == PROD_URL
         return cls(
             api_url=api_url,
