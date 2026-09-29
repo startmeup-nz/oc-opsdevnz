@@ -21,7 +21,7 @@ The monthly reconciliation runbook has two parts:
 Part 2 is the gap. To automate it, we need to:
 
 1. List OC expenses and transactions from the CLI (this story)
-2. Match their `legacyId` values against `oc_expense_id` / `oc_transaction_id`
+2. Match their `publicId` values against `oc_expense_id` / `oc_transaction_id`
    metadata in Beancount (future reconciliation script)
 3. Report any mismatches: expenses in OC without a Beancount entry, or
    Beancount entries referencing missing OC expenses
@@ -40,7 +40,9 @@ This story covers step 1: making the data available.
 - [ ] `--json` outputs machine-readable JSON array
 - [ ] Default (no `--json`): human-readable table with ID, status, amount, payee, description, date
 - [ ] `--staging` / `--prod` environment guardrails
-- [ ] Table output includes `legacyId` as the primary reconciliation key
+- [ ] Table output includes `publicId` as the primary reconciliation key
+      (`ex_…` / `tx_…`); `legacyId` may be shown alongside for human reference
+      only
 
 #### `transactions` subcommand
 
@@ -55,7 +57,10 @@ This story covers step 1: making the data available.
 #### Common behaviour
 
 - [ ] Both subcommands handle pagination: output total count and page info
-- [ ] `--json` output uses `legacyId` as `id` for direct matching against `oc_expense_id` / `oc_transaction_id`
+- [ ] `--json` output uses `publicId` as `id` for direct matching against
+      `oc_expense_id` / `oc_transaction_id`
+- [ ] `--json` output also carries `legacyId` as a separate, clearly display-only
+      field — never as the value of `id`
 - [ ] Staging-first: test against staging API before using on production
 - [ ] Graceful error for accounts that don't exist
 
@@ -64,8 +69,9 @@ This story covers step 1: making the data available.
 Reconciliation work in September 2026 already verified part of the schema
 against the deployed API:
 
-- `expenses(account/host, limit, offset)` works, and `legacyId` is the numeric
-  ID visible in the OC web UI
+- `expenses(account/host, limit, offset)` works; `publicId` (`ex_…`) is present
+  on both single-entity and list queries, and `legacyId` is the numeric ID
+  visible in the OC web UI
 - `amount` on expenses is a plain Int (cents); the object form is
   `amountV2 { valueInCents currency }`
 - Server-side `status: [ExpenseStatus!]` is rejected (the server expects an
@@ -79,8 +85,8 @@ Still to validate against staging before implementing:
 |---|-------|-----------------|
 | 1 | `transactions(limit, offset, kind)` | `TransactionKind` enum values: which are filterable? |
 | 2 | Date range filtering | Do `dateTo` (expenses) and `dateFrom`/`dateTo` (transactions) work as `dateFrom` does on expenses? |
-| 3 | `order.legacyId` on transactions | Does it link back to the originating order? |
-| 4 | `expense.legacyId` on transactions | Does it link back to the originating expense? |
+| 3 | `order.publicId` on transactions | Does it link back to the originating order? |
+| 4 | `expense.publicId` on transactions | Does it link back to the originating expense? |
 | 5 | Pagination `totalCount` | Is it accurate? Does it reflect filtered results? |
 | 6 | `ExpenseStatusFilter` | Input shape for server-side status filtering (optional; client-side filtering works) |
 
@@ -91,10 +97,10 @@ Still to validate against staging before implementing:
 ```
 $ oc-opsdevnz expenses startmeup-nz --staging --status PAID --since 2026-07-01
 
-ID        Status  Amount      Payee            Description
-67        PAID    $655.50     sfd-2026         SFD 2026 allocation
-68        PAID    $105.50     sfd-2026         SFD 2026 SWAG Box
-69        PAID    $250.00     opsdevnz         July hosting costs
+ID                          Status  Amount      Payee      Description
+ex_aUe580n32yQfIOVrV8DV7   PAID    $655.50     sfd-2026   SFD 2026 allocation
+ex_1BNohctNGkj5Z6cd3Opah   PAID    $105.50     sfd-2026   SFD 2026 SWAG Box
+ex_vgdjBFAOcVvssQ1z0cLWE   PAID    $250.00     opsdevnz   July hosting costs
 
 3 expenses (showing 3 of 3)
 ```
@@ -104,29 +110,51 @@ ID        Status  Amount      Payee            Description
 ```
 $ oc-opsdevnz expenses startmeup-nz --staging --status PAID --json
 [
-  {"id": "67", "legacyId": 67, "status": "PAID", "amount": 65550, "currency": "NZD", "payee": "sfd-2026", "description": "SFD 2026 allocation", "createdAt": "2026-07-27T..."},
+  {"id": "ex_aUe580n32yQfIOVrV8DV7", "legacyId": 67, "status": "PAID", "amount": 65550, "currency": "NZD", "payee": "sfd-2026", "description": "SFD 2026 allocation", "createdAt": "2026-07-27T..."},
   ...
 ]
 ```
 
 ### Reconciliation Match Key
 
-The match key between OC and Beancount is the `legacyId`:
+The match key between OC and Beancount is the `publicId`:
 
 | OC Field | Beancount Metadata | Example |
 |----------|-------------------|---------|
-| `expense.legacyId` | `oc_expense_id` | `oc_expense_id: "67"` |
-| `transaction.legacyId` | `oc_transaction_id` | `oc_transaction_id: "42"` |
+| `expense.publicId` | `oc_expense_id` | `oc_expense_id: "ex_aUe580n32yQfIOVrV8DV7"` |
+| `transaction.publicId` | `oc_transaction_id` | `oc_transaction_id: "tx_…"` |
 
-A transaction on OC can also reference its parent via `order.legacyId` (for
-contributions) or `expense.legacyId` (for expenses). The reconciliation script
+A transaction on OC can also reference its parent via `order.publicId` (for
+contributions) or `expense.publicId` (for expenses). The reconciliation script
 should consider these parent links when matching.
+
+### Why `publicId` and not `legacyId`
+
+- OpenCollective deprecated `Expense.legacyId` and `Order.legacyId` on
+  **2026-02-25**, stating verbatim: *"Legacy ID as returned by API V1. Avoid
+  relying on this field as it may be removed in the future."* The stated
+  replacement is `publicId`.
+- `publicId` is globally unique, so an `oc_expense_id` and an `oc_transaction_id`
+  can never collide. `legacyId` is only unique within a type, so Expense 67 and
+  Transaction 67 are different things.
+- `publicId` is self-describing — the `ex_` / `tx_` prefix identifies the type,
+  so a stray metadata key is diagnosable without a lookup.
+- It is already our de facto convention: 5 of the 7 live
+  `oc_expense_id` / `oc_transaction_id` links in Beancount are `ex_`-form.
+
+`legacyId` remains useful as a **display-only** field: it is the number shown in
+the OC web UI, which makes it convenient for a human confirming a match. It must
+never be the value used for matching.
 
 ### Notes
 
-- **`legacyId` is the canonical ID.** The GraphQL `id` field is an opaque
-  base64-encoded string. `legacyId` is the numeric ID visible in the OC web UI
-  and already used in Beancount metadata.
+- **`publicId` is the canonical ID.** The GraphQL `id` field is an opaque
+  base64 Relay node ID (`RXhwZW5zZTo…`) intended for machine use only; it is
+  not what we store. `publicId` (`ex_…` / `tx_…`) is globally unique, is
+  accepted by the mutation inputs, and is what the deprecation notice directs us
+  to.
+- **`legacyId` is display-only.** Safe to print, useful for eyeballing a match
+  against the OC web UI, never to match on.
 - **Stale expenses.** An expense marked `PAID` in OC but missing in Beancount
   is a reconciliation gap. The CLI should make this obvious.
 - **Pagination is real.** The fiscal host will accumulate hundreds of
