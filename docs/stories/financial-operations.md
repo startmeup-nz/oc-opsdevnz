@@ -48,7 +48,8 @@ Two mutations are needed to close the loop:
 - [ ] `--payout-method` flag: `ACCOUNT_BALANCE` (default, record-only) or `BANK_ACCOUNT`
 - [ ] `--items` flag: JSON array of `[{description, amount}]` for multi-line expenses
 - [ ] `--incurred-at` flag for backdating
-- [ ] Outputs the expense ID, legacy ID, and status
+- [ ] Outputs the expense `publicId` (the `ex_…` match key), `legacyId` as a
+      separate display-only field, and status
 - [ ] `--staging`/`--prod` environment guardrails
 
 ### Staging-Validated Patterns

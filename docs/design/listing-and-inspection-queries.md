@@ -212,7 +212,7 @@ Beancount entries.
 query Expenses($slug: String!, $limit: Int!, $offset: Int!) {
   expenses(account: { slug: $slug }, limit: $limit, offset: $offset) {
     nodes {
-      id legacyId status type description
+      id publicId legacyId status type description
       amountV2 { valueInCents currency }
       payee { slug name }
       createdAt
@@ -224,8 +224,10 @@ query Expenses($slug: String!, $limit: Int!, $offset: Int!) {
 
 This is the **primary reconciliation query** for the OC → Beancount matching
 workflow. Each expense node includes:
-- `legacyId` — the numeric ID visible in the OC web UI, used as the
-  `oc_expense_id` in Beancount metadata
+- `publicId` — the globally unique `ex_…` identifier, used as the
+  `oc_expense_id` in Beancount metadata. **This is the match key.**
+- `legacyId` — the numeric ID visible in the OC web UI. Deprecated upstream on
+  2026-02-25; display only, never matched on.
 - `status` — `PENDING`, `APPROVED`, `PAID`, `REJECTED`, `CANCELED`, `DRAFT`;
   not server-filterable via a plain list (see schema notes below), so filter
   client-side
@@ -256,13 +258,13 @@ query Transactions($slug: String!, $limit: Int!, $offset: Int!, $kind: Transacti
   account(slug: $slug) {
     transactions(limit: $limit, offset: $offset, kind: $kind) {
       nodes {
-        id legacyId kind type description
+        id publicId legacyId kind type description
         amount { valueInCents currency }
         fromAccount { slug name }
         toAccount { slug name }
         createdAt
-        order { id legacyId status }
-        expense { id legacyId status }
+        order { id publicId legacyId status }
+        expense { id publicId legacyId status }
       }
       totalCount
     }
@@ -281,10 +283,11 @@ Transactions are the broader financial record — they include `ADDED_FUNDS`,
 
 | Field | Use |
 |-------|-----|
-| `legacyId` | Maps to `oc_transaction_id` in Beancount metadata |
+| `publicId` | Maps to `oc_transaction_id` in Beancount metadata. **Match key.** |
+| `legacyId` | Display only. Deprecated upstream 2026-02-25; never matched on. |
 | `kind` | `ADDED_FUNDS`, `CONTRIBUTION`, `EXPENSE`, `PLATFORM_TIP`, etc. |
-| `order.legacyId` | Links back to the originating contribution/order |
-| `expense.legacyId` | Links back to the originating expense |
+| `order.publicId` | Links back to the originating contribution/order |
+| `expense.publicId` | Links back to the originating expense |
 | `fromAccount.slug` / `toAccount.slug` | Source and destination of the entry |
 
 ### Reconciliation pipeline design
@@ -300,8 +303,11 @@ The `--json` flag outputs machine-readable JSON for piping into reconciliation
 tooling (e.g., a Beancount matcher script). Without `--json`, output is a
 human-readable table.
 
-The reconciliation match key is the `legacyId` — it's the numeric ID visible
-in the OC UI and unambiguous. Beancount metadata uses:
+The reconciliation match key is the `publicId` — globally unique across object
+types, and the field OpenCollective directs us to in place of the deprecated
+`legacyId`. (Note that `legacyId` is *not* unambiguous: it is only unique within
+a type, so Expense 67 and Transaction 67 are different records.) Beancount
+metadata uses:
 - `oc_transaction_id` for transactions (Add Funds, contributions)
 - `oc_expense_id` for expenses
 
