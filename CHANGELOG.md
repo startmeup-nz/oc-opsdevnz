@@ -1,5 +1,12 @@
 # Changelog
 
+## [Unreleased]
+
+- docs: Use `publicId` as the reconciliation match key (`oc_expense_id` /
+  `oc_transaction_id`) instead of the deprecated `legacyId` — OC deprecated
+  `Expense.legacyId`/`Order.legacyId` on 2026-02-25; `legacyId` remains in
+  output as a display-only field and parent links now also carry `publicId`.
+
 ## 0.2.6
 
 - bugfix: `from_secret_ref()` now honours the `OC_API_URL` environment variable (the documented override) instead of ignoring it, and the `op://` reference inference recognises `pat-staging...`/`pat-production...` vault item names. Previously a production reference was silently routed to the staging endpoint.
